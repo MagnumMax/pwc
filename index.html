@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PwC Advisor AI - Enterprise Platform</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Vue.js 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Libre Baskerville', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        pwc: { 
+                            orange: '#D93900', 
+                            black: '#2D2D2D',
+                            gray: '#EBEBEB'
+                        }
+                    },
+                    boxShadow: {
+                        'paper': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
+                        'floating': '0 10px 40px -10px rgba(0,0,0,0.15)',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.3s ease-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+                        slideUp: { '0%': { transform: 'translateY(20px)', opacity: '0' }, '100%': { transform: 'translateY(0)', opacity: '1' } }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #f4f4f5; -webkit-font-smoothing: antialiased; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* Doc Styles */
+        .doc-content h1 { font-family: 'Libre Baskerville', serif; font-size: 24pt; font-weight: 700; margin-bottom: 24px; line-height: 1.2; color: #18181b; }
+        .doc-content h2 { font-family: 'Inter', sans-serif; font-size: 11pt; font-weight: 700; color: #D93900; text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.05em; border-bottom: 1px solid #e4e4e7; padding-bottom: 8px; margin-top: 32px; }
+        .doc-content p { font-family: 'Libre Baskerville', serif; font-size: 10.5pt; line-height: 1.8; color: #3f3f46; margin-bottom: 16px; }
+        .doc-content ul { list-style-type: disc; padding-left: 20px; margin-bottom: 20px; }
+        .doc-content li { font-family: 'Libre Baskerville', serif; font-size: 10.5pt; line-height: 1.7; margin-bottom: 8px; color: #3f3f46; }
+        .doc-content table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 9pt; font-family: 'Inter', sans-serif; border: 1px solid #e4e4e7; }
+        .doc-content td, .doc-content th { padding: 12px; text-align: left; border-bottom: 1px solid #e4e4e7; }
+        .doc-content th { color: #18181b; font-weight: 600; background-color: #f8fafc; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.05em; }
+        [contenteditable]:focus { outline: none; }
+        .toggle-checkbox:checked { right: 0; border-color: #D93900; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #D93900; }
+    </style>
+</head>
+<body>
+
+<div id="app" class="h-screen flex flex-col overflow-hidden text-zinc-900 font-sans bg-[#f4f4f5]">
+    
+    <!-- HEADER -->
+    <header v-if="currentView !== 'login'" class="h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-6 shrink-0 z-30 shadow-sm relative">
+        <div class="flex items-center gap-6 cursor-pointer" @click="goHome">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC Logo" class="h-8 w-auto object-contain">
+            <div class="h-6 w-px bg-zinc-200"></div>
+            <div class="font-sans font-extrabold text-xl tracking-tighter flex items-center gap-0.5 select-none">
+                <span class="text-[#2D2D2D]">ADVISOR</span>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#D93900] to-[#E88E24]">AI</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-[10px] font-bold text-pwc-orange bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 uppercase tracking-wide">Internal Prototype</span>
+            <div class="h-4 w-px bg-zinc-200"></div>
+            <button @click="currentView = 'settings'" :class="currentView === 'settings' ? 'ring-2 ring-pwc-orange ring-offset-2' : ''" class="flex items-center gap-2 hover:bg-zinc-50 p-1.5 rounded-full transition">
+                <div class="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-serif border-2 border-zinc-100 shadow-sm">JD</div>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <aside v-if="['dashboard', 'proposals', 'templates', 'approvals', 'knowledge', 'settings'].includes(currentView)" class="w-64 bg-white border-r border-zinc-200 flex flex-col py-6 z-20 shrink-0">
+            <nav class="space-y-1 px-3">
+                <button @click="currentView = 'dashboard'" :class="navClass('dashboard')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
+                    <i class="ph ph-squares-four text-xl"></i> Dashboard
+                </button>
+                <button @click="currentView = 'proposals'" :class="navClass('proposals')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
+                    <i class="ph ph-files text-xl"></i> All Proposals
+                </button>
+                
+                <!-- NEW SECTIONS -->
+                <div class="pt-4 mt-4 border-t border-zinc-100">
+                    <p class="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Workflow</p>
+                    <button @click="currentView = 'templates'" :class="navClass('templates')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
+                        <i class="ph ph-copy text-xl"></i> Templates
+                    </button>
+                    <button @click="currentView = 'approvals'" :class="navClass('approvals')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
+                        <i class="ph ph-check-square-offset text-xl"></i> 
+                        <span class="flex-1 text-left">Approvals</span>
+                        <span class="bg-pwc-orange text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">2</span>
+                    </button>
+                </div>
+
+            </nav>
+            
+            <div class="mt-auto px-4 pb-4">
+                <button @click="currentView = 'knowledge'" :class="navClass('knowledge')" class="w-full bg-zinc-50 p-4 rounded-xl border border-zinc-200 hover:border-pwc-orange hover:shadow-md transition text-left group relative overflow-hidden">
+                    <div class="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider text-zinc-400 group-hover:text-pwc-orange relative z-10">
+                        <i class="ph ph-database"></i> Knowledge Base
+                    </div>
+                    <div class="text-xs text-zinc-600 mb-1 relative z-10">Status: <span class="text-emerald-600 font-bold">Online</span></div>
+                    <div class="text-[10px] text-zinc-400 relative z-10">Manage Sources & Index</div>
+                    <div v-if="currentView === 'knowledge'" class="absolute inset-0 border-2 border-pwc-orange rounded-xl pointer-events-none"></div>
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENT AREA -->
+        <main class="flex-1 flex flex-col overflow-hidden relative bg-[#f4f4f5]">
+            
+            <!-- VIEW: LOGIN -->
+            <transition name="fade-in">
+                <div v-if="currentView === 'login'" class="absolute inset-0 bg-white flex items-center justify-center z-50">
+                    <div class="w-full max-w-sm text-center">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC Logo" class="h-16 w-auto mx-auto mb-10">
+                        <h1 class="text-3xl font-sans font-extrabold mb-2 tracking-tighter flex items-center justify-center gap-1 select-none">
+                            <span class="text-[#2D2D2D]">ADVISOR</span>
+                            <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#D93900] to-[#E88E24]">AI</span>
+                        </h1>
+                        <p class="text-zinc-500 mb-10 text-sm">Enterprise Proposal Automation</p>
+                        <div class="space-y-4">
+                            <button @click="login" class="w-full bg-[#D93900] text-white hover:bg-[#b32d00] py-3.5 rounded text-sm font-bold tracking-wide transition transform active:scale-[0.98] shadow-md flex items-center justify-center gap-2">
+                                SIGN IN WITH SSO <i class="ph ph-arrow-right font-bold"></i>
+                            </button>
+                            <p class="text-xs text-zinc-400 mt-6">By proceeding, you agree to the Terms of Use.<br>Internal Distribution Only.</p>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- VIEW: DASHBOARD -->
+            <div v-if="currentView === 'dashboard'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+                <div class="max-w-6xl mx-auto">
+                    <div class="flex items-end justify-between mb-10">
+                        <div>
+                            <h2 class="text-3xl font-serif text-zinc-900 tracking-tight">Welcome back, John.</h2>
+                            <p class="text-zinc-500 mt-2">Your team's efficiency is up <strong class="text-emerald-600">12%</strong> this week.</p>
+                        </div>
+                        <button @click="startWizard" class="bg-zinc-900 text-white px-6 py-3.5 rounded text-sm font-bold hover:bg-black transition shadow-lg flex items-center gap-2 active:transform active:scale-95 group">
+                            <i class="ph ph-plus text-lg group-hover:rotate-90 transition-transform"></i>
+                            CREATE PROPOSAL
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        <div class="bg-white p-6 rounded shadow-sm border-t-4 border-pwc-orange hover:shadow-md transition relative overflow-hidden">
+                            <div class="relative z-10">
+                                <div class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center gap-2"><i class="ph ph-clock text-lg"></i> Hours Saved</div>
+                                <div class="text-4xl font-serif text-zinc-900">124<span class="text-lg text-zinc-400 font-sans ml-1">hrs</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow-sm border-t-4 border-[#FFB600] hover:shadow-md transition">
+                            <div class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center gap-2"><i class="ph ph-trend-up text-lg"></i> Win Probability</div>
+                            <div class="text-4xl font-serif text-zinc-900">68<span class="text-lg text-zinc-400 font-sans ml-1">%</span></div>
+                            <div class="w-full bg-zinc-100 h-1.5 mt-4 rounded-full overflow-hidden"><div class="bg-[#FFB600] h-full w-[68%]"></div></div>
+                        </div>
+                        <div class="bg-white p-6 rounded shadow-sm border-t-4 border-zinc-800 hover:shadow-md transition">
+                            <div class="text-zinc-500 text-xs font-bold uppercase mb-2 flex items-center gap-2"><i class="ph ph-files text-lg"></i> Drafts Created</div>
+                            <div class="text-4xl font-serif text-zinc-900">12</div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded shadow-sm overflow-hidden border border-zinc-100">
+                        <div class="px-6 py-5 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+                            <h3 class="font-bold text-zinc-700">Recent Proposals</h3>
+                            <button @click="currentView = 'proposals'" class="text-sm text-pwc-orange hover:text-[#b32d00] font-bold flex items-center gap-1">View All <i class="ph ph-caret-right"></i></button>
+                        </div>
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-zinc-400 bg-zinc-50 uppercase border-b border-zinc-100">
+                                <tr>
+                                    <th class="px-6 py-3 font-bold w-24">Ref ID</th>
+                                    <th class="px-6 py-3 font-bold">Client</th>
+                                    <th class="px-6 py-3 font-bold">Service</th>
+                                    <th class="px-6 py-3 font-bold">Date</th>
+                                    <th class="px-6 py-3 font-bold">Status</th>
+                                    <th class="px-6 py-3 font-bold text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100">
+                                <tr v-for="(prop, index) in recentProposals" :key="prop.id" @click="openProposal(prop)" class="hover:bg-zinc-50 transition cursor-pointer">
+                                    <td class="px-6 py-4 font-mono text-xs text-zinc-400">{{prop.id}}</td>
+                                    <td class="px-6 py-4 font-bold text-zinc-800">{{ prop.client }}</td>
+                                    <td class="px-6 py-4 text-zinc-500">{{ prop.service }}</td>
+                                    <td class="px-6 py-4 text-zinc-500 text-xs">{{ prop.date }}</td>
+                                    <td class="px-6 py-4"><span :class="statusClass(prop.status)" class="px-2 py-1 rounded-sm text-[10px] font-bold uppercase border">{{ prop.status }}</span></td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2 text-zinc-400">
+                                            <button @click.stop="openProposal(prop)" class="hover:text-pwc-orange p-1.5 rounded hover:bg-zinc-100 transition"><i class="ph ph-eye text-lg"></i></button>
+                                            <button @click.stop="deleteProposal('recent', index)" class="hover:text-red-600 p-1.5 rounded hover:bg-zinc-100 transition"><i class="ph ph-trash text-lg"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- NEW VIEW: TEMPLATES -->
+            <div v-if="currentView === 'templates'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-2xl font-serif font-bold mb-2">Standard Templates</h2>
+                    <p class="text-zinc-500 text-sm mb-8">Official PwC global and regional frameworks for rapid drafting.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <!-- Template Card 1 -->
+                        <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:shadow-md transition group cursor-pointer" @click="startWizard">
+                            <div class="h-32 bg-zinc-100 relative flex items-center justify-center">
+                                <i class="ph ph-file-text text-4xl text-zinc-300 group-hover:text-pwc-orange transition"></i>
+                                <span class="absolute top-2 right-2 bg-white px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-zinc-200">Global</span>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-zinc-900 text-sm">Strategic Proposal</h3>
+                                <p class="text-xs text-zinc-500 mt-1 mb-3">Standard format for Consulting & Strategy engagements.</p>
+                                <button class="w-full py-2 border border-zinc-200 rounded text-xs font-bold text-zinc-600 hover:bg-zinc-900 hover:text-white transition">USE TEMPLATE</button>
+                            </div>
+                        </div>
+                        <!-- Template Card 2 -->
+                        <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:shadow-md transition group cursor-pointer" @click="startWizard">
+                            <div class="h-32 bg-zinc-100 relative flex items-center justify-center">
+                                <i class="ph ph-shield-check text-4xl text-zinc-300 group-hover:text-pwc-orange transition"></i>
+                                <span class="absolute top-2 right-2 bg-orange-50 text-pwc-orange px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-orange-100">MENA</span>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-zinc-900 text-sm">Audit & Assurance</h3>
+                                <p class="text-xs text-zinc-500 mt-1 mb-3">Compliant with UAE 2024 Audit Regulations.</p>
+                                <button class="w-full py-2 border border-zinc-200 rounded text-xs font-bold text-zinc-600 hover:bg-zinc-900 hover:text-white transition">USE TEMPLATE</button>
+                            </div>
+                        </div>
+                         <!-- Template Card 3 -->
+                        <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:shadow-md transition group cursor-pointer" @click="startWizard">
+                            <div class="h-32 bg-zinc-100 relative flex items-center justify-center">
+                                <i class="ph ph-plant text-4xl text-zinc-300 group-hover:text-pwc-orange transition"></i>
+                                <span class="absolute top-2 right-2 bg-white px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-zinc-200">New</span>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-zinc-900 text-sm">ESG Impact Report</h3>
+                                <p class="text-xs text-zinc-500 mt-1 mb-3">Focused on Net Zero & Sustainability Goals.</p>
+                                <button class="w-full py-2 border border-zinc-200 rounded text-xs font-bold text-zinc-600 hover:bg-zinc-900 hover:text-white transition">USE TEMPLATE</button>
+                            </div>
+                        </div>
+                        <!-- Template Card 4 -->
+                        <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:shadow-md transition group cursor-pointer" @click="startWizard">
+                            <div class="h-32 bg-zinc-100 relative flex items-center justify-center">
+                                <i class="ph ph-handshake text-4xl text-zinc-300 group-hover:text-pwc-orange transition"></i>
+                            </div>
+                            <div class="p-4">
+                                <h3 class="font-bold text-zinc-900 text-sm">M&A Deals (Buy-side)</h3>
+                                <p class="text-xs text-zinc-500 mt-1 mb-3">Due diligence structure for acquisitions.</p>
+                                <button class="w-full py-2 border border-zinc-200 rounded text-xs font-bold text-zinc-600 hover:bg-zinc-900 hover:text-white transition">USE TEMPLATE</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NEW VIEW: APPROVALS -->
+             <div v-if="currentView === 'approvals'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+                <div class="max-w-5xl mx-auto">
+                    <h2 class="text-2xl font-serif font-bold mb-2">Approvals Center</h2>
+                    <p class="text-zinc-500 text-sm mb-8">Manage partner sign-offs and risk reviews.</p>
+
+                    <!-- Pending Actions -->
+                    <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">Requiring Your Action (2)</h3>
+                    <div class="space-y-3 mb-10">
+                        <div class="bg-white border border-l-4 border-l-pwc-orange border-y-zinc-200 border-r-zinc-200 rounded p-4 shadow-sm flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 font-serif font-bold">SM</div>
+                                <div>
+                                    <div class="text-sm font-bold text-zinc-900">Review: Red Sea Project Scope</div>
+                                    <div class="text-xs text-zinc-500">Submitted by Sarah Miller • 2 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="px-4 py-2 text-xs font-bold border border-zinc-200 rounded hover:bg-zinc-50">VIEW</button>
+                                <button class="px-4 py-2 text-xs font-bold bg-black text-white rounded hover:bg-zinc-800">APPROVE</button>
+                            </div>
+                        </div>
+                         <div class="bg-white border border-l-4 border-l-pwc-orange border-y-zinc-200 border-r-zinc-200 rounded p-4 shadow-sm flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 font-serif font-bold">AK</div>
+                                <div>
+                                    <div class="text-sm font-bold text-zinc-900">Risk Check: AI Implementation</div>
+                                    <div class="text-xs text-zinc-500">Submitted by Ahmed Khan • 5 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button class="px-4 py-2 text-xs font-bold border border-zinc-200 rounded hover:bg-zinc-50">VIEW</button>
+                                <button class="px-4 py-2 text-xs font-bold bg-black text-white rounded hover:bg-zinc-800">APPROVE</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Out for Review -->
+                    <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">Out for Review</h3>
+                    <div class="bg-white border border-zinc-200 rounded overflow-hidden">
+                        <div class="divide-y divide-zinc-100">
+                            <div class="p-4 flex items-center justify-between">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                                    <div>
+                                        <div class="text-sm font-bold text-zinc-900">Nebula Developments: ESG Strategy</div>
+                                        <div class="text-xs text-zinc-500">Waiting for: <span class="font-bold">Partner Sign-off</span></div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                     <div class="flex -space-x-2">
+                                        <div class="w-8 h-8 rounded-full border-2 border-white bg-zinc-200 flex items-center justify-center text-[10px] font-bold" title="You">JD</div>
+                                        <div class="w-8 h-8 rounded-full border-2 border-white bg-zinc-800 text-white flex items-center justify-center text-[10px] font-bold" title="Partner">PT</div>
+                                    </div>
+                                    <button class="text-xs text-pwc-orange font-bold ml-4 hover:underline">NUDGE</button>
+                                </div>
+                            </div>
+                             <div class="p-4 flex items-center justify-between bg-zinc-50/50">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                                    <div>
+                                        <div class="text-sm font-bold text-zinc-500 line-through">Emaar Properties: Q3 Audit</div>
+                                        <div class="text-xs text-zinc-400">Approved yesterday</div>
+                                    </div>
+                                </div>
+                                <div class="text-xs font-bold text-emerald-600 border border-emerald-100 bg-emerald-50 px-2 py-1 rounded">COMPLETED</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- VIEW: ALL PROPOSALS (Existing) -->
+            <div v-if="currentView === 'proposals'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-2xl font-serif font-bold mb-6">Proposal Archive</h2>
+                    <div class="bg-white rounded shadow-sm overflow-hidden border border-zinc-100">
+                        <table class="w-full text-sm text-left">
+                            <thead class="text-xs text-zinc-400 bg-zinc-50 uppercase border-b border-zinc-100">
+                                <tr>
+                                    <th class="px-6 py-4 font-bold w-24">Ref ID</th>
+                                    <th class="px-6 py-4 font-bold">Client</th>
+                                    <th class="px-6 py-4 font-bold">Service</th>
+                                    <th class="px-6 py-4 font-bold">Date</th>
+                                    <th class="px-6 py-4 font-bold">Status</th>
+                                    <th class="px-6 py-4 font-bold text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-100">
+                                <tr v-for="(prop, index) in allProposals" :key="prop.id" @click="openProposal(prop)" class="hover:bg-zinc-50 transition cursor-pointer">
+                                    <td class="px-6 py-4 font-mono text-xs text-zinc-400">{{prop.id}}</td>
+                                    <td class="px-6 py-4 font-bold text-zinc-800">{{ prop.client }}</td>
+                                    <td class="px-6 py-4 text-zinc-500">{{ prop.service }}</td>
+                                    <td class="px-6 py-4 text-zinc-500 text-xs">{{ prop.date }}</td>
+                                    <td class="px-6 py-4"><span :class="statusClass(prop.status)" class="px-2 py-1 rounded-sm text-[10px] font-bold uppercase border">{{ prop.status }}</span></td>
+                                    <td class="px-6 py-4 text-right">
+                                        <div class="flex justify-end gap-2 text-zinc-400">
+                                            <button @click.stop="openProposal(prop)" class="hover:text-pwc-orange p-1.5 rounded hover:bg-zinc-100 transition"><i class="ph ph-eye text-lg"></i></button>
+                                            <button @click.stop="deleteProposal('all', index)" class="hover:text-red-600 p-1.5 rounded hover:bg-zinc-100 transition"><i class="ph ph-trash text-lg"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: KNOWLEDGE BASE -->
+            <div v-if="currentView === 'knowledge'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex items-center justify-between mb-8">
+                        <div><h2 class="text-2xl font-serif font-bold text-zinc-900">Knowledge Base Index</h2><p class="text-sm text-zinc-500 mt-1">Manage data sources and active regulations for RAG generation.</p></div>
+                        <button @click="showModal = 'connect_source'" class="bg-black text-white px-6 py-2.5 rounded text-sm font-bold hover:bg-zinc-800 transition flex items-center gap-2 shadow-md active:scale-95 transform"><i class="ph ph-plus"></i> Connect Source</button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
+                        <div class="divide-y divide-zinc-100">
+                            <div v-for="(source, idx) in knowledgeSources" :key="idx" class="p-6 flex items-start justify-between hover:bg-zinc-50 transition animate-slide-up">
+                                <div class="flex gap-5">
+                                    <div class="bg-zinc-100 w-12 h-12 rounded-lg flex items-center justify-center text-zinc-500 shrink-0"><i :class="source.icon" class="text-2xl"></i></div>
+                                    <div>
+                                        <div class="font-bold text-base text-zinc-900">{{ source.name }}</div>
+                                        <div class="text-sm text-zinc-500 mt-1 max-w-lg">{{ source.desc }}</div>
+                                        <div class="mt-2 flex items-center gap-2">
+                                            <span v-if="source.active" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-emerald-50 text-emerald-700 border border-emerald-100"><div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> Active</span>
+                                            <span v-else class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-zinc-100 text-zinc-500 border border-zinc-200"><div class="w-1.5 h-1.5 rounded-full bg-zinc-400"></div> Disabled</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end gap-4">
+                                    <div class="flex items-center gap-4">
+                                        <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in"><input type="checkbox" :id="'toggle'+idx" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-zinc-300" :checked="source.active" @change="toggleSource(idx)"/><label :for="'toggle'+idx" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 cursor-pointer"></label></div>
+                                        <button @click="deleteSource(idx)" class="text-zinc-400 hover:text-red-600 transition p-1 hover:bg-red-50 rounded"><i class="ph ph-trash text-xl"></i></button>
+                                    </div>
+                                    <div class="text-[10px] text-zinc-400">Last sync: 2h ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: SETTINGS -->
+            <div v-if="currentView === 'settings'" class="flex-1 overflow-y-auto bg-white p-8 animate-fade-in">
+                <div class="max-w-3xl mx-auto py-4">
+                    <h2 class="text-3xl font-serif font-bold text-zinc-900 mb-8">Settings</h2>
+                    <div class="flex border-b border-zinc-200 mb-8">
+                        <button @click="settingsTab = 'general'" :class="settingsTab === 'general' ? 'border-black text-black font-bold' : 'border-transparent text-zinc-500 hover:text-black'" class="px-1 py-3 border-b-2 text-sm transition mr-6">General</button>
+                        <button @click="settingsTab = 'security'" :class="settingsTab === 'security' ? 'border-black text-black font-bold' : 'border-transparent text-zinc-500 hover:text-black'" class="px-1 py-3 border-b-2 text-sm transition">Security</button>
+                    </div>
+                    <div v-if="settingsTab === 'general'" class="space-y-8 animate-slide-up">
+                        <div class="flex items-center gap-6">
+                            <div class="w-20 h-20 bg-zinc-900 text-white rounded-full flex items-center justify-center text-2xl font-serif shrink-0">JD</div>
+                            <div>
+                                <h3 class="font-bold text-lg text-zinc-900">{{ userProfile.name }}</h3>
+                                <p class="text-sm text-zinc-500">{{ userProfile.role }}</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="col-span-1"><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Display Name</label><input type="text" v-model="userProfile.name" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange transition"></div>
+                            <div class="col-span-1"><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Email Address</label><input type="email" v-model="userProfile.email" disabled class="w-full bg-zinc-50 border border-zinc-200 rounded px-4 py-3 text-sm text-zinc-500 cursor-not-allowed"></div>
+                            <div class="col-span-1"><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Job Title</label><input type="text" v-model="userProfile.role" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange transition"></div>
+                            <div class="col-span-1"><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Office Location</label><select v-model="userProfile.office" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm bg-white focus:outline-none focus:border-pwc-orange"><option>Dubai (Emaar Square)</option><option>Abu Dhabi (Global Market)</option><option>Riyadh (Kingdom Centre)</option></select></div>
+                        </div>
+                        <div class="pt-6 border-t border-zinc-100 flex justify-end"><button @click="saveSettings" class="bg-black text-white px-8 py-3 rounded text-sm font-bold hover:bg-zinc-800 transition shadow-sm">Save Changes</button></div>
+                    </div>
+                    <div v-if="settingsTab === 'security'" class="space-y-8 animate-slide-up">
+                        <div><h3 class="font-bold text-lg text-zinc-900 mb-2">Password</h3><p class="text-sm text-zinc-500 mb-6">Please enter your current password to change your password.</p><div class="space-y-4 max-w-md"><div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Current Password</label><input type="password" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange transition"></div><div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">New Password</label><input type="password" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange transition"></div></div></div>
+                        <div class="pt-6 border-t border-zinc-100 flex justify-end"><button @click="saveSettings" class="bg-black text-white px-8 py-3 rounded text-sm font-bold hover:bg-zinc-800 transition shadow-sm">Update Security</button></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: WIZARD -->
+            <div v-if="currentView === 'wizard'" class="flex-1 flex flex-col items-center justify-center bg-zinc-100">
+                <div class="w-full max-w-3xl animate-slide-up">
+                    <button @click="currentView = 'dashboard'" class="mb-6 text-sm text-zinc-500 hover:text-black flex items-center gap-1 font-medium transition">
+                        <i class="ph ph-arrow-left"></i> CANCEL & RETURN
+                    </button>
+                    <div class="bg-white p-10 border border-zinc-200 rounded shadow-paper">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div v-for="step in 3" :key="step" class="flex-1 h-1.5 rounded-full transition-colors duration-300" :class="step <= wizardStep ? 'bg-pwc-orange' : 'bg-zinc-100'"></div>
+                        </div>
+                        <div v-if="wizardStep === 1">
+                            <h2 class="text-2xl font-serif font-bold mb-6">Client Context</h2>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Client Entity Name</label><input v-model="form.client" type="text" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange focus:ring-1 focus:ring-pwc-orange transition"></div>
+                                <div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Jurisdiction</label><select v-model="form.region" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm bg-white focus:outline-none focus:border-pwc-orange"><option>Dubai (DIFC)</option><option>Dubai (Onshore)</option><option>Abu Dhabi (ADGM)</option><option>Riyadh (KSA)</option></select></div>
+                            </div>
+                        </div>
+                        <div v-if="wizardStep === 2">
+                            <h2 class="text-2xl font-serif font-bold mb-6">Primary Service Line</h2>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button v-for="srv in ['ESG & Sustainability', 'Audit & Assurance', 'Deals', 'Tax']" @click="form.service = srv" :class="form.service === srv ? 'border-pwc-orange bg-orange-50 text-pwc-orange shadow-inner' : 'border-zinc-200 hover:border-zinc-400'" class="p-6 border rounded text-left transition h-32 flex flex-col justify-between group"><span class="font-bold text-lg">{{ srv }}</span><i :class="form.service === srv ? 'ph-check-circle-fill text-pwc-orange' : 'ph-circle text-zinc-300'" class="ph text-2xl"></i></button>
+                            </div>
+                        </div>
+                        <div v-if="wizardStep === 3">
+                            <h2 class="text-2xl font-serif font-bold mb-2">Strategic Objectives</h2>
+                            <div @click="uploadMockFile" class="border-2 border-dashed border-zinc-300 rounded-lg p-8 text-center hover:border-pwc-orange hover:bg-orange-50 transition cursor-pointer mb-6 group">
+                                <div v-if="!fileUploading"><i class="ph ph-upload-simple text-3xl text-zinc-400 mb-2 group-hover:text-pwc-orange transition"></i><p class="text-sm font-bold text-zinc-600 group-hover:text-black">Click to upload RFP document</p><p class="text-xs text-zinc-400">PDF, DOCX up to 25MB</p></div>
+                                <div v-else class="flex flex-col items-center"><i class="ph ph-spinner animate-spin text-3xl text-pwc-orange mb-2"></i><p class="text-sm font-bold text-zinc-600">Scanning document context...</p></div>
+                            </div>
+                            <p class="text-sm text-zinc-500 mb-2 font-bold uppercase text-[10px]">Or paste text directly</p>
+                            <textarea v-model="form.notes" class="w-full h-32 border border-zinc-300 rounded px-4 py-3 text-sm font-mono text-zinc-700 focus:outline-none focus:border-pwc-orange focus:ring-1 focus:ring-pwc-orange resize-none leading-relaxed" placeholder="Type here..."></textarea>
+                        </div>
+                        <div class="flex items-center justify-between mt-10 pt-8 border-t border-zinc-100">
+                            <button v-if="wizardStep > 1" @click="wizardStep--" class="text-sm font-bold text-zinc-500 hover:text-black transition">BACK</button>
+                            <div v-else></div>
+                            <button v-if="wizardStep < 3" @click="wizardStep++" class="bg-black text-white px-8 py-3 rounded text-sm font-bold hover:bg-zinc-800 transition">NEXT STEP</button>
+                            <button v-else @click="startGeneration" class="bg-pwc-orange text-white px-8 py-3 rounded text-sm font-bold hover:bg-[#b32d00] transition flex items-center gap-2 shadow-lg"><i class="ph ph-magic-wand"></i> GENERATE DRAFT</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: LOADING -->
+            <div v-if="currentView === 'loading'" class="flex-1 bg-zinc-900 text-white font-mono p-10 flex flex-col justify-center items-center z-50 absolute inset-0">
+                <div class="w-full max-w-2xl">
+                    <div class="flex items-center justify-between border-b border-zinc-700 pb-4 mb-8">
+                        <span class="text-pwc-orange font-bold tracking-wider animate-pulse">ADVISOR AI CORE</span>
+                        <span class="text-xs text-zinc-500">SECURE CONNECTION ESTABLISHED</span>
+                        <div class="mt-4 font-sans font-extrabold text-xl tracking-tighter flex items-center gap-0.5 select-none justify-end"><span class="text-white">ADVISOR</span><span class="text-transparent bg-clip-text bg-gradient-to-r from-[#D93900] to-[#E88E24]">AI</span></div>
+                    </div>
+                    <div class="space-y-3 text-sm h-64 overflow-y-auto">
+                        <div v-for="(log, i) in logs" :key="i" class="flex gap-4 animate-fade-in"><span class="text-zinc-500 w-24 text-right border-r border-zinc-800 pr-4">{{ log.time }}</span><span :class="log.color || 'text-zinc-300'">{{ log.text }}</span></div>
+                        <div class="flex gap-4 mt-4"><span class="text-zinc-500 w-24 text-right border-r border-zinc-800 pr-4">...</span><span class="text-pwc-orange flex items-center gap-2">PROCESSING<span class="cursor-blink">_</span></span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: EDITOR (DETAILS) -->
+            <div v-if="currentView === 'editor'" class="flex-1 flex overflow-hidden bg-[#f4f4f5] animate-fade-in relative">
+                
+                <!-- Toolbar -->
+                <div class="absolute top-0 left-0 right-0 h-16 bg-white border-b border-zinc-200 z-30 flex items-center justify-between px-6 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <button @click="goHome" class="flex items-center gap-2 text-sm font-bold text-zinc-500 hover:text-black transition p-2 hover:bg-zinc-100 rounded"><i class="ph ph-arrow-left text-lg"></i> Back</button>
+                        <div class="h-6 w-px bg-zinc-200"></div>
+                        <div><div class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Ref: {{ activeProposal.id }}</div><div class="font-bold text-sm text-zinc-800">{{ activeProposal.client || form.client }}</div></div>
+                        <div class="relative ml-2">
+                             <button @click="showStatusMenu = !showStatusMenu" :class="statusClass(activeProposal.status || 'Draft')" class="flex items-center gap-2 px-3 py-1 rounded text-[10px] font-bold uppercase border hover:opacity-80 transition cursor-pointer">{{ activeProposal.status || 'Draft' }}<i class="ph ph-caret-down"></i></button>
+                            <div v-if="showStatusMenu" class="absolute top-full left-0 mt-2 w-40 bg-white border border-zinc-200 rounded shadow-xl z-50 py-1">
+                                <button @click="updateStatus('Draft')" class="w-full text-left px-4 py-2 text-xs hover:bg-zinc-50 flex items-center gap-2 text-zinc-600"><div class="w-2 h-2 bg-zinc-400 rounded-full"></div> Draft</button>
+                                <button @click="updateStatus('Review')" class="w-full text-left px-4 py-2 text-xs hover:bg-zinc-50 flex items-center gap-2 text-amber-600"><div class="w-2 h-2 bg-amber-500 rounded-full"></div> Review</button>
+                                <button @click="updateStatus('Approved')" class="w-full text-left px-4 py-2 text-xs hover:bg-zinc-50 flex items-center gap-2 text-emerald-600"><div class="w-2 h-2 bg-emerald-500 rounded-full"></div> Approved</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-3"><button @click="showModal = 'export'" class="bg-black text-white px-5 py-2 rounded text-xs font-bold uppercase tracking-wide hover:bg-zinc-800 transition flex items-center gap-2 shadow-md"><i class="ph ph-export"></i> Export</button></div>
+                </div>
+
+                <!-- Editor Area -->
+                <div class="flex-1 overflow-y-auto flex flex-col items-center pt-24 pb-12 relative" id="doc-container">
+                    
+                    <!-- Formatting Toolbar -->
+                    <div class="sticky top-0 z-20 mb-4">
+                        <div class="bg-white/90 backdrop-blur-sm border border-zinc-200 rounded-full shadow-lg p-1.5 flex items-center gap-1">
+                            <button onclick="document.execCommand('bold')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="Bold"><i class="ph ph-text-b"></i></button>
+                            <button onclick="document.execCommand('italic')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="Italic"><i class="ph ph-text-italic"></i></button>
+                            <div class="w-px h-4 bg-zinc-200 mx-2"></div>
+                            <button onclick="document.execCommand('formatBlock', false, '<h2>')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 text-xs font-bold transition">H1</button>
+                            <button onclick="document.execCommand('formatBlock', false, '<h3>')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 text-xs font-bold transition">H2</button>
+                            <div class="w-px h-4 bg-zinc-200 mx-2"></div>
+                            <button onclick="document.execCommand('insertUnorderedList')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="List"><i class="ph ph-list-bullets"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="w-[210mm] min-h-[297mm] bg-white shadow-paper relative text-sm leading-relaxed text-justify text-zinc-800 doc-content flex flex-col mb-10">
+                        <div class="p-[25mm] flex-1">
+                            <div class="absolute top-[15mm] right-[15mm]"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC" class="h-8 w-auto"></div>
+                            <div contenteditable="true" class="outline-none" v-html="generatedContent" @input="generatedContent = $event.target.innerHTML"></div>
+                        </div>
+                        <div class="px-[25mm] py-6 text-center border-t border-zinc-100 mt-auto bg-white"><p class="text-[9px] text-zinc-400 font-sans uppercase tracking-widest">PricewaterhouseCoopers Limited (Dubai Branch) • Confidential • {{ new Date().getFullYear() }}</p></div>
+                    </div>
+                </div>
+
+                <!-- RIGHT PANEL -->
+                <div class="w-96 border-l border-zinc-200 bg-white flex flex-col z-20 shadow-xl h-full shrink-0">
+                    <div class="flex border-b border-zinc-200 bg-white">
+                        <button @click="rightTab = 'advisor'" :class="rightTab === 'advisor' ? 'border-b-2 border-pwc-orange text-pwc-orange bg-orange-50' : 'text-zinc-400 hover:text-black'" class="flex-1 py-3 text-xs font-bold uppercase tracking-wide transition">Advisor</button>
+                        <button @click="rightTab = 'history'" :class="rightTab === 'history' ? 'border-b-2 border-pwc-orange text-pwc-orange bg-orange-50' : 'text-zinc-400 hover:text-black'" class="flex-1 py-3 text-xs font-bold uppercase tracking-wide transition">History</button>
+                    </div>
+                    
+                    <div v-if="rightTab === 'advisor'" class="flex flex-col h-full">
+                        <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
+                             <div>
+                                <h4 class="text-xs font-bold text-zinc-900 uppercase tracking-wider mb-3">Project Economics</h4>
+                                <div class="bg-zinc-900 text-white rounded-lg p-4 shadow-md relative overflow-hidden">
+                                    <div class="relative z-10 grid grid-cols-2 gap-4">
+                                        <div><div class="text-[10px] text-zinc-400 uppercase">Est. Revenue</div><div class="text-xl font-serif text-white">$480k</div></div>
+                                        <div><div class="text-[10px] text-zinc-400 uppercase">Margin</div><div class="text-xl font-serif text-emerald-400">42%</div></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 class="text-xs font-bold text-zinc-900 uppercase tracking-wider mb-3">Completion Audit</h4>
+                                <div class="bg-zinc-50 border border-zinc-200 rounded-lg p-4 shadow-sm">
+                                    <div class="flex justify-between items-end mb-2"><span class="text-2xl font-bold text-zinc-800">80%</span><span class="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">GOOD</span></div>
+                                    <div class="w-full bg-zinc-200 rounded-full h-1.5 mb-4"><div class="bg-emerald-500 h-1.5 rounded-full" style="width: 80%"></div></div>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center gap-2 text-xs text-zinc-500"><i class="ph ph-check-circle text-emerald-500"></i> Legal Disclaimer</div>
+                                        <div class="flex items-center gap-2 text-xs text-zinc-500"><i class="ph ph-check-circle text-emerald-500"></i> Team CVs Included</div>
+                                        <div class="flex items-center gap-2 text-xs text-zinc-800 font-bold"><i class="ph ph-circle text-pwc-orange"></i> Risk: Data Privacy (Missing)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex items-center justify-between mb-3"><h4 class="text-xs font-bold text-zinc-900 uppercase tracking-wider">Strategic Risks</h4><span v-if="risks.length" class="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full font-bold">{{ risks.length }} Active</span></div>
+                                <div v-for="(risk, idx) in risks" :key="idx" class="border border-red-100 bg-red-50 rounded-lg p-3 mb-3 animate-slide-up shadow-sm">
+                                    <div class="flex gap-3">
+                                        <div class="mt-0.5"><i class="ph ph-warning-octagon text-pwc-orange text-lg"></i></div>
+                                        <div><h4 class="text-xs font-bold text-red-900">{{ risk.title }}</h4><p class="text-xs text-red-800 mt-1 mb-2 leading-relaxed">{{ risk.desc }}</p><button v-if="risk.action" @click="resolveRisk(idx)" class="w-full text-center text-[10px] bg-white border border-red-200 text-red-700 py-1.5 rounded hover:bg-red-100 transition font-bold shadow-sm uppercase">{{ risk.action }}</button></div>
+                                    </div>
+                                </div>
+                                <div v-if="risks.length === 0" class="text-center py-4 text-xs text-zinc-400 italic">No active risks detected.</div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 border-t border-zinc-200 bg-white shrink-0 z-10">
+                            <div id="chat-container" class="flex flex-col gap-2 mb-2 max-h-40 overflow-y-auto pr-1" v-show="chatHistory.length > 0">
+                                <div v-for="msg in chatHistory" :key="msg.id" :class="msg.role === 'user' ? 'self-end bg-zinc-800 text-white' : 'self-start bg-zinc-100 border border-zinc-200 text-zinc-800'" class="px-3 py-2 rounded text-xs max-w-[90%] shadow-sm animate-fade-in">{{ msg.text }}</div>
+                            </div>
+
+                            <div v-if="chatHistory.length === 0" class="mb-3">
+                                <p class="text-[10px] font-bold text-zinc-400 uppercase mb-2 ml-1">Quick Actions</p>
+                                <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                                    <button @click="triggerAction('Check compliance against DIFC rules')" class="whitespace-nowrap text-[10px] bg-white hover:bg-orange-50 hover:text-pwc-orange hover:border-pwc-orange text-zinc-600 px-3 py-1.5 rounded-full transition border border-zinc-200 shadow-sm">Check Compliance</button>
+                                    <button @click="triggerAction('Make the tone more persuasive')" class="whitespace-nowrap text-[10px] bg-white hover:bg-orange-50 hover:text-pwc-orange hover:border-pwc-orange text-zinc-600 px-3 py-1.5 rounded-full transition border border-zinc-200 shadow-sm">Enhance Tone</button>
+                                    <button @click="triggerAction('Add digital twin section')" class="whitespace-nowrap text-[10px] bg-white hover:bg-orange-50 hover:text-pwc-orange hover:border-pwc-orange text-zinc-600 px-3 py-1.5 rounded-full transition border border-zinc-200 shadow-sm">Add Tech Scope</button>
+                                </div>
+                            </div>
+
+                            <div class="relative">
+                                <input v-model="chatInput" @keyup.enter="sendMessage" type="text" placeholder="Ask Advisor AI..." class="w-full bg-zinc-50 border border-zinc-300 rounded px-3 py-3 text-xs focus:outline-none focus:border-pwc-orange shadow-inner pr-10">
+                                <button @click="sendMessage" class="absolute right-2 top-2 text-zinc-400 hover:text-pwc-orange p-1"><i class="ph ph-paper-plane-right text-lg"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODALS -->
+    <transition name="fade-in">
+        <div v-if="showModal" class="fixed inset-0 bg-zinc-900/60 z-[100] flex items-center justify-center backdrop-blur-sm">
+            <div v-if="showModal === 'connect_source'" class="bg-white rounded shadow-2xl p-8 w-[500px] animate-slide-up">
+                <div class="flex justify-between items-center mb-6 border-b border-zinc-100 pb-4"><h3 class="font-bold text-lg text-zinc-900">Connect New Source</h3><button @click="showModal = null" class="text-zinc-400 hover:text-black"><i class="ph ph-x text-xl"></i></button></div>
+                <div class="space-y-5">
+                    <div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Source Type</label><div class="grid grid-cols-3 gap-3"><button class="flex flex-col items-center justify-center p-3 border rounded hover:border-pwc-orange hover:bg-orange-50 transition border-zinc-200 text-zinc-600 bg-white"><i class="ph ph-file-pdf text-2xl mb-1"></i><span class="text-[10px] font-bold">Document</span></button><button class="flex flex-col items-center justify-center p-3 border rounded border-pwc-orange bg-orange-50 text-pwc-orange transition"><i class="ph ph-globe text-2xl mb-1"></i><span class="text-[10px] font-bold">Web URL</span></button><button class="flex flex-col items-center justify-center p-3 border rounded hover:border-pwc-orange hover:bg-orange-50 transition border-zinc-200 text-zinc-600 bg-white"><i class="ph ph-database text-2xl mb-1"></i><span class="text-[10px] font-bold">Database</span></button></div></div>
+                    <div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Source Name / Title</label><input type="text" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange" placeholder="e.g. Q4 Financial Report"></div>
+                    <div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Endpoint URL or File Path</label><input type="text" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange font-mono text-zinc-600" placeholder="https://"></div>
+                </div>
+                <div class="mt-8 flex justify-end gap-3 pt-4 border-t border-zinc-100"><button @click="showModal = null" class="px-4 py-2 text-sm font-bold text-zinc-500 hover:text-black transition">CANCEL</button><button @click="connectNewSource" class="bg-black text-white px-6 py-2 rounded text-sm font-bold hover:bg-zinc-800 transition shadow-md">CONNECT SOURCE</button></div>
+            </div>
+            <div v-if="showModal === 'export'" class="bg-white rounded shadow-2xl p-8 w-96 animate-slide-up">
+                <div class="text-center mb-6"><div class="w-12 h-12 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-3"><i class="ph ph-file-arrow-down text-2xl text-zinc-600"></i></div><h3 class="font-bold text-lg text-zinc-900">Export Document</h3><p class="text-sm text-zinc-500">Select format for {{ activeProposal.client || 'Draft' }}</p></div>
+                <div class="space-y-3 mb-8">
+                    <button @click="simulateDownload('PDF')" class="w-full flex items-center justify-between p-4 border border-zinc-200 rounded hover:border-pwc-orange hover:bg-orange-50 transition group bg-white"><div class="flex items-center gap-3"><i class="ph ph-file-pdf text-[#E0301E] text-2xl"></i><div class="text-left"><div class="text-sm font-bold text-zinc-800">Adobe PDF</div><div class="text-[10px] text-zinc-400">Best for sharing</div></div></div><i class="ph ph-download-simple opacity-0 group-hover:opacity-100 text-pwc-orange"></i></button>
+                    <button @click="simulateDownload('PPTX')" class="w-full flex items-center justify-between p-4 border border-zinc-200 rounded hover:border-pwc-orange hover:bg-orange-50 transition group bg-white"><div class="flex items-center gap-3"><i class="ph ph-presentation text-[#D93900] text-2xl"></i><div class="text-left"><div class="text-sm font-bold text-zinc-800">PowerPoint</div><div class="text-[10px] text-zinc-400">Editable slides</div></div></div><i class="ph ph-download-simple opacity-0 group-hover:opacity-100 text-pwc-orange"></i></button>
+                </div>
+                <button @click="showModal = null" class="w-full text-sm font-bold text-zinc-500 hover:text-black transition">CANCEL</button>
+            </div>
+        </div>
+    </transition>
+
+    <!-- TOAST -->
+    <transition name="slide-up">
+        <div v-if="toast" class="fixed bottom-6 right-6 bg-zinc-900 text-white px-5 py-3 rounded shadow-2xl flex items-center gap-3 text-sm font-medium z-[200]">
+            <i class="ph ph-check-circle text-emerald-400 text-lg"></i>
+            {{ toast }}
+        </div>
+    </transition>
+
+</div>
+
+<script>
+    const { createApp } = Vue
+
+    createApp({
+        data() {
+            return {
+                currentView: 'login', 
+                wizardStep: 1,
+                showModal: null,
+                toast: null,
+                activeProposal: {},
+                chatInput: '',
+                chatHistory: [],
+                rightTab: 'advisor',
+                showStatusMenu: false,
+                settingsTab: 'general',
+                fileUploading: false,
+                
+                userProfile: { name: "John Doe", email: "john.doe@pwc.com", role: "Senior Manager", office: "Dubai (Emaar Square)" },
+                knowledgeSources: [
+                    { name: "Global Best Practices (PwC Network)", desc: "Access to 10k+ successful past proposals globally.", icon: "ph ph-globe", active: true },
+                    { name: "UAE Legal Framework (2024-2025)", desc: "Real-time sync with Dubai Official Gazette & Federal Laws.", icon: "ph ph-scales", active: true },
+                    { name: "Internal Client History", desc: "Past engagements with Nebula Developments.", icon: "ph ph-users", active: true },
+                    { name: "Market Research (MENA)", desc: "Third-party market data feeds (Bloomberg, Reuters).", icon: "ph ph-chart-line-up", active: false },
+                ],
+                form: { client: 'Nebula Developments', region: 'Dubai (DIFC)', service: 'ESG & Sustainability', notes: "Client is planning 'Eco-Oasis'..." },
+                generatedContent: `<h1>Strategic ESG Framework & Decarbonization Roadmap</h1><h2>1. Executive Summary</h2><p>PwC is pleased to submit this proposal to <strong>Nebula Developments</strong> to support the strategic launch of the "Eco-Oasis" flagship project. Understanding your ambition to redefine luxury living through sustainability, our approach combines rigorous regulatory analysis with a value-driven framework aligned with the <strong>UAE Net Zero 2050</strong> strategic initiative.</p><p>We aim to position Eco-Oasis not just as a real estate asset, but as a benchmark for regenerative development in the MENA region, ensuring long-term value creation for stakeholders.</p><h2>2. Our Methodology</h2><p>We propose a rapid, high-impact engagement structured into three key phases, leveraging our global "From Strategy to Execution" framework:</p><ul><li><strong>Phase 1: Diagnostic & Benchmarking (Week 1)</strong><br>Gap analysis against Dubai Green Building Regulations (Al Sa'fat) and competitor benchmarking.</li><li><strong>Phase 2: Strategy Design (Week 2-3)</strong><br>Development of a LEED Platinum pathway and carbon footprint modeling.</li><li><strong>Phase 3: Investor Roadmap (Week 4)</strong><br>Preparation of an ESG Investment Deck suitable for green financing.</li></ul><h2>3. Team Structure</h2><p>PwC has assembled a team of regional experts to ensure delivery excellence:</p><table><tr><th>Role</th><th>Responsibility</th></tr><tr><td>Engagement Partner</td><td>Strategic oversight, QA, and final sign-off.</td></tr><tr><td>ESG Subject Matter Expert</td><td>Technical LEED, Net Zero modeling, and policy alignment.</td></tr><tr><td>Senior Associate</td><td>Project management, research, and day-to-day delivery.</td></tr></table>`,
+                risks: [{ title: 'Compliance: PDPL Article 4', desc: 'Use of AI sensors for tenant tracking requires explicit Data Privacy Impact Assessment (DPIA).', action: 'ADD DPIA TO SCOPE' }],
+                recentProposals: [
+                    { id: 'P-101', client: 'Emaar Properties', service: 'Audit', date: '24 Oct 2025', status: 'Approved' },
+                    { id: 'P-102', client: 'ADNOC Dist.', service: 'Strategy', date: '22 Oct 2025', status: 'Review' },
+                    { id: 'P-103', client: 'Dubai Holding', service: 'Tech', date: '20 Oct 2025', status: 'Draft' },
+                ],
+                allProposals: [
+                     { id: 'P-101', client: 'Emaar Properties', service: 'Audit', date: '24 Oct 2025', status: 'Approved' },
+                     { id: 'P-102', client: 'ADNOC Dist.', service: 'Strategy', date: '22 Oct 2025', status: 'Review' },
+                     { id: 'P-103', client: 'Dubai Holding', service: 'Tech', date: '20 Oct 2025', status: 'Draft' },
+                     { id: 'P-104', client: 'Masdar', service: 'ESG', date: '18 Oct 2025', status: 'Approved' },
+                     { id: 'P-105', client: 'Etihad Rail', service: 'Deals', date: '15 Oct 2025', status: 'Review' },
+                ],
+                logs: []
+            }
+        },
+        methods: {
+            login() { this.currentView = 'dashboard'; this.showToast('Authentication Successful'); },
+            goHome() { this.currentView = 'dashboard'; },
+            navClass(view) { if(this.currentView === view) { if(view === 'knowledge') return ''; return 'bg-orange-50 text-pwc-orange border border-orange-100 shadow-sm'; } return 'text-zinc-500 hover:text-black hover:bg-zinc-50'; },
+            statusClass(status) { const map = { 'Approved': 'bg-emerald-50 text-emerald-800 border-emerald-100', 'Review': 'bg-amber-50 text-amber-800 border-amber-100', 'Draft': 'bg-zinc-100 text-zinc-600 border-zinc-200' }; return map[status] || map['Draft']; },
+            startWizard() { this.currentView = 'wizard'; this.wizardStep = 1; },
+            startGeneration() {
+                this.currentView = 'loading';
+                this.logs = [];
+                const steps = [{ text: "AUTHENTICATING USER...", delay: 500 }, { text: "RETRIEVING CLIENT DATA...", delay: 1500 }, { text: "SCANNING UAE REGULATIONS...", delay: 2500, color: "text-pwc-orange" }, { text: "GENERATING SECTIONS...", delay: 3500 }, { text: "FINALIZING DOCUMENT...", delay: 4500 }];
+                let start = Date.now();
+                steps.forEach(s => setTimeout(() => this.logs.push({ time: `+${((Date.now()-start)/1000 + (s.delay/1000)).toFixed(1)}s`, text: s.text, color: s.color }), s.delay));
+                setTimeout(() => { this.activeProposal = { id: 'NEB-2026-ESG', client: this.form.client, status: 'Draft' }; this.currentView = 'editor'; }, 5500);
+            },
+            openProposal(prop) { this.activeProposal = prop; this.currentView = 'editor'; },
+            deleteProposal(listType, index) { if(listType === 'recent') this.recentProposals.splice(index, 1); else this.allProposals.splice(index, 1); this.showToast('Proposal deleted'); },
+            resolveRisk(index) { this.generatedContent = this.generatedContent.replace('Gap analysis against', '<strong>Data Privacy Impact Assessment (DPIA)</strong>, Gap analysis against'); this.risks.splice(index, 1); this.showToast('Scope updated with DPIA'); },
+            triggerAction(text) { this.chatInput = text; this.sendMessage(); },
+            sendMessage() {
+                if(!this.chatInput) return;
+                const input = this.chatInput.toLowerCase();
+                this.chatHistory.push({ id: Date.now(), role: 'user', text: this.chatInput });
+                this.chatInput = '';
+                setTimeout(() => { const el = document.getElementById('chat-container'); if(el) el.scrollTop = el.scrollHeight; }, 10);
+                setTimeout(() => {
+                    let aiResponse = "";
+                    if (input.includes("title") || input.includes("heading")) { this.generatedContent = this.generatedContent.replace(/<h1>.*?<\/h1>/, `<h1>Updated: Strategic ESG & Smart City Roadmap</h1>`); aiResponse = "I've updated the proposal title as requested."; } 
+                    else if (input.includes("digital twin") || input.includes("technology") || input.includes("add section") || input.includes("tech scope")) { this.generatedContent += `<h2>4. Digital Technology Integration</h2><p>To support the smart city ambition, we will outline a Digital Twin strategy. This involves deploying IoT sensors for real-time energy monitoring, ensuring predictive maintenance and tenant comfort optimization, fully integrated with the building management system.</p>`; aiResponse = "I added a new section on Digital Twin technology."; } 
+                    else if (input.includes("summary") || input.includes("executive") || input.includes("tone")) { this.generatedContent = this.generatedContent.replace(/<p>PwC is pleased.*?<\/p>/, `<p><strong>Revised:</strong> PwC is excited to partner with Nebula Developments. Our approach leverages cutting-edge sustainability frameworks to ensure the Eco-Oasis project exceeds global benchmarks.</p>`); aiResponse = "I have rewritten the Executive Summary to be more concise."; } 
+                    else { aiResponse = "I have noted your request. Is there a specific section you'd like me to edit or add?"; }
+                    this.chatHistory.push({ id: Date.now()+1, role: 'ai', text: aiResponse });
+                    setTimeout(() => { const el = document.getElementById('chat-container'); if(el) el.scrollTop = el.scrollHeight; if(input.includes("add")) { const doc = document.getElementById('doc-container'); if(doc) doc.scrollTop = doc.scrollHeight; } }, 10);
+                }, 1000);
+            },
+            simulateDownload(type) { this.showModal = null; this.showToast(`Downloading ${type}...`); },
+            updateStatus(newStatus) { this.activeProposal.status = newStatus; this.showStatusMenu = false; this.showToast(`Status changed to ${newStatus}`); },
+            toggleSource(idx) { this.knowledgeSources[idx].active = !this.knowledgeSources[idx].active; const status = this.knowledgeSources[idx].active ? 'Enabled' : 'Disabled'; this.showToast(`${this.knowledgeSources[idx].name} ${status}`); },
+            deleteSource(idx) { this.knowledgeSources.splice(idx, 1); this.showToast('Source disconnected'); },
+            saveSettings() { this.showToast('Profile settings saved'); },
+            connectNewSource() { this.knowledgeSources.push({ name: "External API: MENA Markets", desc: "Custom integration added manually.", icon: "ph ph-link", active: true }); this.showModal = null; this.showToast("Data Source Connected Successfully"); },
+            uploadMockFile() { this.fileUploading = true; setTimeout(() => { this.fileUploading = false; this.form.notes = "Content extracted from 'NEBULA_RFP_V2.pdf'...\n\n- LEED Platinum requirement confirmed.\n- Focus on water scarcity solutions.\n- Deadline: 4 weeks.\n- Budget cap: $500k."; this.showToast("RFP Analyzed & Content Extracted"); }, 2000); },
+            showToast(msg) { this.toast = msg; setTimeout(() => this.toast = null, 3000); }
+        }
+    }).mount('#app')
+</script>
+
+</body>
+</html>
