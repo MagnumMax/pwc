@@ -62,13 +62,14 @@
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
         /* Doc Styles */
-        .doc-content h1 { font-family: 'Libre Baskerville', serif; font-size: 24pt; font-weight: 700; margin-bottom: 24px; line-height: 1.2; color: #18181b; }
+        .doc-content h1 { font-family: 'Libre Baskerville', serif; font-size: 24pt; font-weight: 700; margin-bottom: 24px; line-height: 1.2; color: #18181b; text-align: left; }
         .doc-content h2 { font-family: 'Inter', sans-serif; font-size: 11pt; font-weight: 700; color: #D93900; text-transform: uppercase; margin-bottom: 16px; letter-spacing: 0.05em; border-bottom: 1px solid #e4e4e7; padding-bottom: 8px; margin-top: 32px; }
         .doc-content p { font-family: 'Libre Baskerville', serif; font-size: 10.5pt; line-height: 1.8; color: #3f3f46; margin-bottom: 16px; }
         .doc-content ul { list-style-type: disc; padding-left: 20px; margin-bottom: 20px; }
         .doc-content li { font-family: 'Libre Baskerville', serif; font-size: 10.5pt; line-height: 1.7; margin-bottom: 8px; color: #3f3f46; }
-        .doc-content table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 9pt; font-family: 'Inter', sans-serif; border: 1px solid #e4e4e7; }
-        .doc-content td, .doc-content th { padding: 12px; text-align: left; border-bottom: 1px solid #e4e4e7; }
+        .doc-content table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 9pt; font-family: 'Inter', sans-serif; border: 1px solid #e4e4e7; table-layout: fixed; }
+        .doc-content td, .doc-content th { padding: 12px; text-align: left; border-bottom: 1px solid #e4e4e7; overflow-wrap: break-word; word-wrap: break-word; }
+        .doc-content th:first-child { width: 35%; }
         .doc-content th { color: #18181b; font-weight: 600; background-color: #f8fafc; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.05em; }
         [contenteditable]:focus { outline: none; }
         .toggle-checkbox:checked { right: 0; border-color: #D93900; }
@@ -80,18 +81,23 @@
 <div id="app" class="h-screen flex flex-col overflow-hidden text-zinc-900 font-sans bg-[#f4f4f5]">
     
     <!-- HEADER -->
-    <header v-if="currentView !== 'login'" class="h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-6 shrink-0 z-30 shadow-sm relative">
-        <div class="flex items-center gap-6 cursor-pointer" @click="goHome">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC Logo" class="h-8 w-auto object-contain">
-            <div class="h-6 w-px bg-zinc-200"></div>
-            <div class="font-sans font-extrabold text-xl tracking-tighter flex items-center gap-0.5 select-none">
-                <span class="text-[#2D2D2D]">ADVISOR</span>
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#D93900] to-[#E88E24]">AI</span>
+    <header v-if="currentView !== 'login'" class="h-16 bg-white border-b border-zinc-200 flex items-center justify-between px-4 md:px-6 shrink-0 z-30 shadow-sm relative">
+        <div class="flex items-center gap-3 md:gap-6">
+            <button @click="mobileMenuOpen = !mobileMenuOpen" class="md:hidden text-zinc-500 hover:text-black p-1" v-if="['dashboard', 'proposals', 'templates', 'approvals', 'knowledge', 'settings'].includes(currentView)">
+                <i class="ph ph-list text-2xl"></i>
+            </button>
+            <div class="flex items-center gap-3 md:gap-6 cursor-pointer" @click="goHome">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC Logo" class="h-6 md:h-8 w-auto object-contain">
+                <div class="h-6 w-px bg-zinc-200 hidden md:block"></div>
+                <div class="font-sans font-extrabold text-lg md:text-xl tracking-tighter flex items-center gap-0.5 select-none">
+                    <span class="text-[#2D2D2D]">ADVISOR</span>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#D93900] to-[#E88E24]">AI</span>
+                </div>
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <span class="text-[10px] font-bold text-pwc-orange bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 uppercase tracking-wide">Internal Prototype</span>
-            <div class="h-4 w-px bg-zinc-200"></div>
+            <span class="hidden md:inline-block text-[10px] font-bold text-pwc-orange bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 uppercase tracking-wide">Internal Prototype</span>
+            <div class="hidden md:block h-4 w-px bg-zinc-200"></div>
             <button @click="currentView = 'settings'" :class="currentView === 'settings' ? 'ring-2 ring-pwc-orange ring-offset-2' : ''" class="flex items-center gap-2 hover:bg-zinc-50 p-1.5 rounded-full transition">
                 <div class="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-serif border-2 border-zinc-100 shadow-sm">JD</div>
             </button>
@@ -101,23 +107,29 @@
     <!-- MAIN -->
     <div class="flex-1 flex overflow-hidden">
         
+        <!-- SIDEBAR BACKDROP -->
+        <div v-if="mobileMenuOpen && ['dashboard', 'proposals', 'templates', 'approvals', 'knowledge', 'settings'].includes(currentView)" 
+             class="fixed inset-0 bg-black/50 z-40 md:hidden animate-fade-in" @click="mobileMenuOpen = false"></div>
+
         <!-- SIDEBAR -->
-        <aside v-if="['dashboard', 'proposals', 'templates', 'approvals', 'knowledge', 'settings'].includes(currentView)" class="w-64 bg-white border-r border-zinc-200 flex flex-col py-6 z-20 shrink-0">
+        <aside v-if="['dashboard', 'proposals', 'templates', 'approvals', 'knowledge', 'settings'].includes(currentView)" 
+               :class="mobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'"
+               class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-zinc-200 flex flex-col py-6 transition-transform duration-300 transform md:relative md:translate-x-0 md:z-20 shrink-0">
             <nav class="space-y-1 px-3">
-                <button @click="currentView = 'dashboard'" :class="navClass('dashboard')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
+                <button @click="navigate('dashboard')" :class="navClass('dashboard')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
                     <i class="ph ph-squares-four text-xl"></i> Dashboard
                 </button>
-                <button @click="currentView = 'proposals'" :class="navClass('proposals')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
+                <button @click="navigate('proposals')" :class="navClass('proposals')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
                     <i class="ph ph-files text-xl"></i> All Proposals
                 </button>
                 
                 <!-- NEW SECTIONS -->
                 <div class="pt-4 mt-4 border-t border-zinc-100">
                     <p class="px-3 text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-2">Workflow</p>
-                    <button @click="currentView = 'templates'" :class="navClass('templates')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
+                    <button @click="navigate('templates')" :class="navClass('templates')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
                         <i class="ph ph-copy text-xl"></i> Templates
                     </button>
-                    <button @click="currentView = 'approvals'" :class="navClass('approvals')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
+                    <button @click="navigate('approvals')" :class="navClass('approvals')" class="w-full flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-md transition-all">
                         <i class="ph ph-check-square-offset text-xl"></i> 
                         <span class="flex-1 text-left">Approvals</span>
                         <span class="bg-pwc-orange text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">2</span>
@@ -127,7 +139,7 @@
             </nav>
             
             <div class="mt-auto px-4 pb-4">
-                <button @click="currentView = 'knowledge'" :class="navClass('knowledge')" class="w-full bg-zinc-50 p-4 rounded-xl border border-zinc-200 hover:border-pwc-orange hover:shadow-md transition text-left group relative overflow-hidden">
+                <button @click="navigate('knowledge')" :class="navClass('knowledge')" class="w-full bg-zinc-50 p-4 rounded-xl border border-zinc-200 hover:border-pwc-orange hover:shadow-md transition text-left group relative overflow-hidden">
                     <div class="flex items-center gap-2 mb-2 text-xs font-bold uppercase tracking-wider text-zinc-400 group-hover:text-pwc-orange relative z-10">
                         <i class="ph ph-database"></i> Knowledge Base
                     </div>
@@ -144,7 +156,7 @@
             <!-- VIEW: LOGIN -->
             <transition name="fade-in">
                 <div v-if="currentView === 'login'" class="absolute inset-0 bg-white flex items-center justify-center z-50">
-                    <div class="w-full max-w-sm text-center">
+                    <div class="w-full max-w-sm text-center px-6">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC Logo" class="h-16 w-auto mx-auto mb-10">
                         <h1 class="text-3xl font-sans font-extrabold mb-2 tracking-tighter flex items-center justify-center gap-1 select-none">
                             <span class="text-[#2D2D2D]">ADVISOR</span>
@@ -162,14 +174,14 @@
             </transition>
 
             <!-- VIEW: DASHBOARD -->
-            <div v-if="currentView === 'dashboard'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+            <div v-if="currentView === 'dashboard'" class="flex-1 overflow-y-auto p-4 md:p-8 animate-fade-in">
                 <div class="max-w-6xl mx-auto">
-                    <div class="flex items-end justify-between mb-10">
+                    <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-10 gap-4">
                         <div>
-                            <h2 class="text-3xl font-serif text-zinc-900 tracking-tight">Welcome back, John.</h2>
-                            <p class="text-zinc-500 mt-2">Your team's efficiency is up <strong class="text-emerald-600">12%</strong> this week.</p>
+                            <h2 class="text-2xl md:text-3xl font-serif text-zinc-900 tracking-tight">Welcome back, John.</h2>
+                            <p class="text-zinc-500 mt-2 text-sm md:text-base">Your team's efficiency is up <strong class="text-emerald-600">12%</strong> this week.</p>
                         </div>
-                        <button @click="startWizard" class="bg-zinc-900 text-white px-6 py-3.5 rounded text-sm font-bold hover:bg-black transition shadow-lg flex items-center gap-2 active:transform active:scale-95 group">
+                        <button @click="startWizard" class="w-full md:w-auto bg-zinc-900 text-white px-6 py-3.5 rounded text-sm font-bold hover:bg-black transition shadow-lg flex items-center justify-center gap-2 active:transform active:scale-95 group">
                             <i class="ph ph-plus text-lg group-hover:rotate-90 transition-transform"></i>
                             CREATE PROPOSAL
                         </button>
@@ -198,7 +210,33 @@
                             <h3 class="font-bold text-zinc-700">Recent Proposals</h3>
                             <button @click="currentView = 'proposals'" class="text-sm text-pwc-orange hover:text-[#b32d00] font-bold flex items-center gap-1">View All <i class="ph ph-caret-right"></i></button>
                         </div>
-                        <table class="w-full text-sm text-left">
+                        
+                        <!-- Mobile Card View -->
+                        <div class="md:hidden divide-y divide-zinc-100">
+                            <div v-for="(prop, index) in recentProposals" :key="prop.id" @click="openProposal(prop)" class="p-4 hover:bg-zinc-50 active:bg-zinc-100 transition cursor-pointer">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div>
+                                        <div class="font-bold text-zinc-900 text-sm">{{ prop.client }}</div>
+                                        <div class="text-xs text-zinc-500">{{ prop.service }}</div>
+                                    </div>
+                                    <span :class="statusClass(prop.status)" class="px-2 py-1 rounded-sm text-[10px] font-bold uppercase border">{{ prop.status }}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-xs text-zinc-400 mt-3">
+                                    <span class="font-mono">{{ prop.id }}</span>
+                                    <span class="flex items-center gap-4">
+                                        <span>{{ prop.date }}</span>
+                                        <div class="flex gap-3 text-zinc-400">
+                                            <button @click.stop="openProposal(prop)" class="hover:text-pwc-orange"><i class="ph ph-eye text-lg"></i></button>
+                                            <button @click.stop="deleteProposal('recent', index)" class="hover:text-red-600"><i class="ph ph-trash text-lg"></i></button>
+                                        </div>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Desktop Table View -->
+                        <div class="hidden md:block overflow-x-auto">
+                        <table class="w-full text-sm text-left whitespace-nowrap">
                             <thead class="text-xs text-zinc-400 bg-zinc-50 uppercase border-b border-zinc-100">
                                 <tr>
                                     <th class="px-6 py-3 font-bold w-24">Ref ID</th>
@@ -225,12 +263,13 @@
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
             
             <!-- NEW VIEW: TEMPLATES -->
-            <div v-if="currentView === 'templates'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+            <div v-if="currentView === 'templates'" class="flex-1 overflow-y-auto p-4 md:p-8 animate-fade-in">
                 <div class="max-w-6xl mx-auto">
                     <h2 class="text-2xl font-serif font-bold mb-2">Standard Templates</h2>
                     <p class="text-zinc-500 text-sm mb-8">Official PwC global and regional frameworks for rapid drafting.</p>
@@ -238,9 +277,10 @@
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <!-- Template Card 1 -->
                         <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:shadow-md transition group cursor-pointer" @click="startWizard">
-                            <div class="h-32 bg-zinc-100 relative flex items-center justify-center">
-                                <i class="ph ph-file-text text-4xl text-zinc-300 group-hover:text-pwc-orange transition"></i>
-                                <span class="absolute top-2 right-2 bg-white px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-zinc-200">Global</span>
+                            <div class="h-32 bg-zinc-100 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800" alt="Strategic Proposal" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
+                                <span class="absolute top-2 right-2 bg-white px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-zinc-200 shadow-sm">Global</span>
                             </div>
                             <div class="p-4">
                                 <h3 class="font-bold text-zinc-900 text-sm">Strategic Proposal</h3>
@@ -250,9 +290,10 @@
                         </div>
                         <!-- Template Card 2 -->
                         <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:shadow-md transition group cursor-pointer" @click="startWizard">
-                            <div class="h-32 bg-zinc-100 relative flex items-center justify-center">
-                                <i class="ph ph-shield-check text-4xl text-zinc-300 group-hover:text-pwc-orange transition"></i>
-                                <span class="absolute top-2 right-2 bg-orange-50 text-pwc-orange px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-orange-100">MENA</span>
+                            <div class="h-32 bg-zinc-100 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&q=80&w=800" alt="Audit & Assurance" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
+                                <span class="absolute top-2 right-2 bg-orange-50 text-pwc-orange px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-orange-100 shadow-sm">MENA</span>
                             </div>
                             <div class="p-4">
                                 <h3 class="font-bold text-zinc-900 text-sm">Audit & Assurance</h3>
@@ -262,9 +303,10 @@
                         </div>
                          <!-- Template Card 3 -->
                         <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:shadow-md transition group cursor-pointer" @click="startWizard">
-                            <div class="h-32 bg-zinc-100 relative flex items-center justify-center">
-                                <i class="ph ph-plant text-4xl text-zinc-300 group-hover:text-pwc-orange transition"></i>
-                                <span class="absolute top-2 right-2 bg-white px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-zinc-200">New</span>
+                            <div class="h-32 bg-zinc-100 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?auto=format&fit=crop&q=80&w=800" alt="ESG Impact Report" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
+                                <span class="absolute top-2 right-2 bg-white px-2 py-0.5 text-[10px] font-bold uppercase rounded border border-zinc-200 shadow-sm">New</span>
                             </div>
                             <div class="p-4">
                                 <h3 class="font-bold text-zinc-900 text-sm">ESG Impact Report</h3>
@@ -274,8 +316,9 @@
                         </div>
                         <!-- Template Card 4 -->
                         <div class="bg-white rounded-lg border border-zinc-200 overflow-hidden hover:shadow-md transition group cursor-pointer" @click="startWizard">
-                            <div class="h-32 bg-zinc-100 relative flex items-center justify-center">
-                                <i class="ph ph-handshake text-4xl text-zinc-300 group-hover:text-pwc-orange transition"></i>
+                            <div class="h-32 bg-zinc-100 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1560520653-9e0e4c89eb11?auto=format&fit=crop&q=80&w=800" alt="M&A Deals" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                <div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
                             </div>
                             <div class="p-4">
                                 <h3 class="font-bold text-zinc-900 text-sm">M&A Deals (Buy-side)</h3>
@@ -288,38 +331,26 @@
             </div>
 
             <!-- NEW VIEW: APPROVALS -->
-             <div v-if="currentView === 'approvals'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+             <div v-if="currentView === 'approvals'" class="flex-1 overflow-y-auto p-4 md:p-8 animate-fade-in">
                 <div class="max-w-5xl mx-auto">
                     <h2 class="text-2xl font-serif font-bold mb-2">Approvals Center</h2>
                     <p class="text-zinc-500 text-sm mb-8">Manage partner sign-offs and risk reviews.</p>
 
                     <!-- Pending Actions -->
-                    <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">Requiring Your Action (2)</h3>
+                    <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">Requiring Your Action ({{ pendingApprovals.length }})</h3>
                     <div class="space-y-3 mb-10">
-                        <div class="bg-white border border-l-4 border-l-pwc-orange border-y-zinc-200 border-r-zinc-200 rounded p-4 shadow-sm flex items-center justify-between">
+                        <div v-if="pendingApprovals.length === 0" class="text-zinc-400 text-sm italic">No pending approvals.</div>
+                        <div v-for="(item, index) in pendingApprovals" :key="item.id" class="bg-white border border-l-4 border-l-pwc-orange border-y-zinc-200 border-r-zinc-200 rounded p-4 shadow-sm flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 font-serif font-bold">SM</div>
+                                <div class="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 font-serif font-bold">{{ item.initials }}</div>
                                 <div>
-                                    <div class="text-sm font-bold text-zinc-900">Review: Red Sea Project Scope</div>
-                                    <div class="text-xs text-zinc-500">Submitted by Sarah Miller • 2 hours ago</div>
+                                    <div class="text-sm font-bold text-zinc-900">{{ item.title }}</div>
+                                    <div class="text-xs text-zinc-500">Submitted by {{ item.submittedBy }} • {{ item.time }}</div>
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button class="px-4 py-2 text-xs font-bold border border-zinc-200 rounded hover:bg-zinc-50">VIEW</button>
-                                <button class="px-4 py-2 text-xs font-bold bg-black text-white rounded hover:bg-zinc-800">APPROVE</button>
-                            </div>
-                        </div>
-                         <div class="bg-white border border-l-4 border-l-pwc-orange border-y-zinc-200 border-r-zinc-200 rounded p-4 shadow-sm flex items-center justify-between">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-500 font-serif font-bold">AK</div>
-                                <div>
-                                    <div class="text-sm font-bold text-zinc-900">Risk Check: AI Implementation</div>
-                                    <div class="text-xs text-zinc-500">Submitted by Ahmed Khan • 5 hours ago</div>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button class="px-4 py-2 text-xs font-bold border border-zinc-200 rounded hover:bg-zinc-50">VIEW</button>
-                                <button class="px-4 py-2 text-xs font-bold bg-black text-white rounded hover:bg-zinc-800">APPROVE</button>
+                                <button @click="viewApproval(item)" class="px-4 py-2 text-xs font-bold border border-zinc-200 rounded hover:bg-zinc-50">VIEW</button>
+                                <button @click="approveAction(item, index)" class="px-4 py-2 text-xs font-bold bg-black text-white rounded hover:bg-zinc-800">APPROVE</button>
                             </div>
                         </div>
                     </div>
@@ -328,28 +359,28 @@
                     <h3 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-4">Out for Review</h3>
                     <div class="bg-white border border-zinc-200 rounded overflow-hidden">
                         <div class="divide-y divide-zinc-100">
-                            <div class="p-4 flex items-center justify-between">
+                            <div v-for="item in outForReview" :key="item.id" class="p-4 flex items-center justify-between">
                                 <div class="flex items-center gap-4">
                                     <div class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
                                     <div>
-                                        <div class="text-sm font-bold text-zinc-900">Nebula Developments: ESG Strategy</div>
-                                        <div class="text-xs text-zinc-500">Waiting for: <span class="font-bold">Partner Sign-off</span></div>
+                                        <div class="text-sm font-bold text-zinc-900">{{ item.title }}</div>
+                                        <div class="text-xs text-zinc-500">Waiting for: <span class="font-bold">{{ item.waitingFor }}</span></div>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2">
                                      <div class="flex -space-x-2">
                                         <div class="w-8 h-8 rounded-full border-2 border-white bg-zinc-200 flex items-center justify-center text-[10px] font-bold" title="You">JD</div>
-                                        <div class="w-8 h-8 rounded-full border-2 border-white bg-zinc-800 text-white flex items-center justify-center text-[10px] font-bold" title="Partner">PT</div>
+                                        <div class="w-8 h-8 rounded-full border-2 border-white bg-zinc-800 text-white flex items-center justify-center text-[10px] font-bold" title="Partner">{{ item.partnerInitials }}</div>
                                     </div>
-                                    <button class="text-xs text-pwc-orange font-bold ml-4 hover:underline">NUDGE</button>
+                                    <button @click="nudgeAction(item)" class="text-xs text-pwc-orange font-bold ml-4 hover:underline">NUDGE</button>
                                 </div>
                             </div>
-                             <div class="p-4 flex items-center justify-between bg-zinc-50/50">
+                             <div v-for="item in completedApprovals" :key="item.id" class="p-4 flex items-center justify-between bg-zinc-50/50">
                                 <div class="flex items-center gap-4">
                                     <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
                                     <div>
-                                        <div class="text-sm font-bold text-zinc-500 line-through">Emaar Properties: Q3 Audit</div>
-                                        <div class="text-xs text-zinc-400">Approved yesterday</div>
+                                        <div class="text-sm font-bold text-zinc-500 line-through">{{ item.title }}</div>
+                                        <div class="text-xs text-zinc-400">Approved {{ item.approvedTime }}</div>
                                     </div>
                                 </div>
                                 <div class="text-xs font-bold text-emerald-600 border border-emerald-100 bg-emerald-50 px-2 py-1 rounded">COMPLETED</div>
@@ -361,11 +392,12 @@
             </div>
 
             <!-- VIEW: ALL PROPOSALS (Existing) -->
-            <div v-if="currentView === 'proposals'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+            <div v-if="currentView === 'proposals'" class="flex-1 overflow-y-auto p-4 md:p-8 animate-fade-in">
                 <div class="max-w-6xl mx-auto">
                     <h2 class="text-2xl font-serif font-bold mb-6">Proposal Archive</h2>
                     <div class="bg-white rounded shadow-sm overflow-hidden border border-zinc-100">
-                        <table class="w-full text-sm text-left">
+                        <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left whitespace-nowrap">
                             <thead class="text-xs text-zinc-400 bg-zinc-50 uppercase border-b border-zinc-100">
                                 <tr>
                                     <th class="px-6 py-4 font-bold w-24">Ref ID</th>
@@ -392,12 +424,13 @@
                                 </tr>
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- VIEW: KNOWLEDGE BASE -->
-            <div v-if="currentView === 'knowledge'" class="flex-1 overflow-y-auto p-8 animate-fade-in">
+            <div v-if="currentView === 'knowledge'" class="flex-1 overflow-y-auto p-4 md:p-8 animate-fade-in">
                 <div class="max-w-4xl mx-auto">
                     <div class="flex items-center justify-between mb-8">
                         <div><h2 class="text-2xl font-serif font-bold text-zinc-900">Knowledge Base Index</h2><p class="text-sm text-zinc-500 mt-1">Manage data sources and active regulations for RAG generation.</p></div>
@@ -405,8 +438,8 @@
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-zinc-200 overflow-hidden">
                         <div class="divide-y divide-zinc-100">
-                            <div v-for="(source, idx) in knowledgeSources" :key="idx" class="p-6 flex items-start justify-between hover:bg-zinc-50 transition animate-slide-up">
-                                <div class="flex gap-5">
+                            <div v-for="(source, idx) in knowledgeSources" :key="idx" class="p-4 md:p-6 flex flex-col md:flex-row items-start justify-between hover:bg-zinc-50 transition animate-slide-up gap-4">
+                                <div class="flex gap-4 md:gap-5 w-full md:w-auto">
                                     <div class="bg-zinc-100 w-12 h-12 rounded-lg flex items-center justify-center text-zinc-500 shrink-0"><i :class="source.icon" class="text-2xl"></i></div>
                                     <div>
                                         <div class="font-bold text-base text-zinc-900">{{ source.name }}</div>
@@ -417,7 +450,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="flex flex-col items-end gap-4">
+                                <div class="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-4 mt-2 md:mt-0">
                                     <div class="flex items-center gap-4">
                                         <div class="relative inline-block w-12 align-middle select-none transition duration-200 ease-in"><input type="checkbox" :id="'toggle'+idx" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer border-zinc-300" :checked="source.active" @change="toggleSource(idx)"/><label :for="'toggle'+idx" class="toggle-label block overflow-hidden h-6 rounded-full bg-zinc-300 cursor-pointer"></label></div>
                                         <button @click="deleteSource(idx)" class="text-zinc-400 hover:text-red-600 transition p-1 hover:bg-red-50 rounded"><i class="ph ph-trash text-xl"></i></button>
@@ -431,7 +464,7 @@
             </div>
 
             <!-- VIEW: SETTINGS -->
-            <div v-if="currentView === 'settings'" class="flex-1 overflow-y-auto bg-white p-8 animate-fade-in">
+            <div v-if="currentView === 'settings'" class="flex-1 overflow-y-auto bg-white p-4 md:p-8 animate-fade-in">
                 <div class="max-w-3xl mx-auto py-4">
                     <h2 class="text-3xl font-serif font-bold text-zinc-900 mb-8">Settings</h2>
                     <div class="flex border-b border-zinc-200 mb-8">
@@ -462,44 +495,46 @@
             </div>
 
             <!-- VIEW: WIZARD -->
-            <div v-if="currentView === 'wizard'" class="flex-1 flex flex-col items-center justify-center bg-zinc-100">
-                <div class="w-full max-w-3xl animate-slide-up">
-                    <button @click="currentView = 'dashboard'" class="mb-6 text-sm text-zinc-500 hover:text-black flex items-center gap-1 font-medium transition">
-                        <i class="ph ph-arrow-left"></i> CANCEL & RETURN
-                    </button>
-                    <div class="bg-white p-10 border border-zinc-200 rounded shadow-paper">
-                        <div class="flex items-center gap-4 mb-8">
+            <div v-if="currentView === 'wizard'" class="flex-1 overflow-y-auto bg-zinc-100">
+                <div class="min-h-full flex flex-col items-center justify-center p-4 md:p-8">
+                    <div class="w-full max-w-3xl animate-slide-up">
+                        <button @click="currentView = 'dashboard'" class="mb-4 md:mb-6 text-sm text-zinc-500 hover:text-black flex items-center gap-1 font-medium transition">
+                            <i class="ph ph-arrow-left"></i> CANCEL & RETURN
+                        </button>
+                    <div class="bg-white p-6 md:p-10 border border-zinc-200 rounded shadow-paper">
+                        <div class="flex items-center gap-4 mb-6 md:mb-8">
                             <div v-for="step in 3" :key="step" class="flex-1 h-1.5 rounded-full transition-colors duration-300" :class="step <= wizardStep ? 'bg-pwc-orange' : 'bg-zinc-100'"></div>
                         </div>
                         <div v-if="wizardStep === 1">
-                            <h2 class="text-2xl font-serif font-bold mb-6">Client Context</h2>
-                            <div class="grid grid-cols-1 gap-6">
+                            <h2 class="text-xl md:text-2xl font-serif font-bold mb-6">Client Context</h2>
+                            <div class="grid grid-cols-1 gap-4 md:gap-6">
                                 <div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Client Entity Name</label><input v-model="form.client" type="text" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange focus:ring-1 focus:ring-pwc-orange transition"></div>
                                 <div><label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Jurisdiction</label><select v-model="form.region" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm bg-white focus:outline-none focus:border-pwc-orange"><option>Dubai (DIFC)</option><option>Dubai (Onshore)</option><option>Abu Dhabi (ADGM)</option><option>Riyadh (KSA)</option></select></div>
                             </div>
                         </div>
                         <div v-if="wizardStep === 2">
-                            <h2 class="text-2xl font-serif font-bold mb-6">Primary Service Line</h2>
-                            <div class="grid grid-cols-2 gap-4">
-                                <button v-for="srv in ['ESG & Sustainability', 'Audit & Assurance', 'Deals', 'Tax']" @click="form.service = srv" :class="form.service === srv ? 'border-pwc-orange bg-orange-50 text-pwc-orange shadow-inner' : 'border-zinc-200 hover:border-zinc-400'" class="p-6 border rounded text-left transition h-32 flex flex-col justify-between group"><span class="font-bold text-lg">{{ srv }}</span><i :class="form.service === srv ? 'ph-check-circle-fill text-pwc-orange' : 'ph-circle text-zinc-300'" class="ph text-2xl"></i></button>
+                            <h2 class="text-xl md:text-2xl font-serif font-bold mb-6">Primary Service Line</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <button v-for="srv in ['ESG & Sustainability', 'Audit & Assurance', 'Deals', 'Tax']" @click="form.service = srv" :class="form.service === srv ? 'border-pwc-orange bg-orange-50 text-pwc-orange shadow-inner' : 'border-zinc-200 hover:border-zinc-400'" class="p-4 md:p-6 border rounded text-left transition h-24 md:h-32 flex flex-col justify-between group"><span class="font-bold text-base md:text-lg">{{ srv }}</span><i :class="form.service === srv ? 'ph-check-circle-fill text-pwc-orange' : 'ph-circle text-zinc-300'" class="ph text-xl md:text-2xl"></i></button>
                             </div>
                         </div>
                         <div v-if="wizardStep === 3">
-                            <h2 class="text-2xl font-serif font-bold mb-2">Strategic Objectives</h2>
-                            <div @click="uploadMockFile" class="border-2 border-dashed border-zinc-300 rounded-lg p-8 text-center hover:border-pwc-orange hover:bg-orange-50 transition cursor-pointer mb-6 group">
+                            <h2 class="text-xl md:text-2xl font-serif font-bold mb-2">Strategic Objectives</h2>
+                            <div @click="uploadMockFile" class="border-2 border-dashed border-zinc-300 rounded-lg p-6 md:p-8 text-center hover:border-pwc-orange hover:bg-orange-50 transition cursor-pointer mb-6 group">
                                 <div v-if="!fileUploading"><i class="ph ph-upload-simple text-3xl text-zinc-400 mb-2 group-hover:text-pwc-orange transition"></i><p class="text-sm font-bold text-zinc-600 group-hover:text-black">Click to upload RFP document</p><p class="text-xs text-zinc-400">PDF, DOCX up to 25MB</p></div>
                                 <div v-else class="flex flex-col items-center"><i class="ph ph-spinner animate-spin text-3xl text-pwc-orange mb-2"></i><p class="text-sm font-bold text-zinc-600">Scanning document context...</p></div>
                             </div>
                             <p class="text-sm text-zinc-500 mb-2 font-bold uppercase text-[10px]">Or paste text directly</p>
                             <textarea v-model="form.notes" class="w-full h-32 border border-zinc-300 rounded px-4 py-3 text-sm font-mono text-zinc-700 focus:outline-none focus:border-pwc-orange focus:ring-1 focus:ring-pwc-orange resize-none leading-relaxed" placeholder="Type here..."></textarea>
                         </div>
-                        <div class="flex items-center justify-between mt-10 pt-8 border-t border-zinc-100">
-                            <button v-if="wizardStep > 1" @click="wizardStep--" class="text-sm font-bold text-zinc-500 hover:text-black transition">BACK</button>
+                        <div class="flex items-center justify-between mt-6 md:mt-10 pt-6 md:pt-8 border-t border-zinc-100">
+                            <button v-if="wizardStep > 1" @click="wizardStep--" class="text-sm font-bold text-zinc-500 hover:text-black transition px-4 py-2">BACK</button>
                             <div v-else></div>
-                            <button v-if="wizardStep < 3" @click="wizardStep++" class="bg-black text-white px-8 py-3 rounded text-sm font-bold hover:bg-zinc-800 transition">NEXT STEP</button>
-                            <button v-else @click="startGeneration" class="bg-pwc-orange text-white px-8 py-3 rounded text-sm font-bold hover:bg-[#b32d00] transition flex items-center gap-2 shadow-lg"><i class="ph ph-magic-wand"></i> GENERATE DRAFT</button>
+                            <button v-if="wizardStep < 3" @click="wizardStep++" class="bg-black text-white px-6 md:px-8 py-3 rounded text-sm font-bold hover:bg-zinc-800 transition w-auto">NEXT STEP</button>
+                            <button v-else @click="startGeneration" class="bg-pwc-orange text-white px-6 md:px-8 py-3 rounded text-sm font-bold hover:bg-[#b32d00] transition flex items-center gap-2 shadow-lg w-auto"><i class="ph ph-magic-wand"></i> GENERATE DRAFT</button>
                         </div>
                     </div>
+                </div>
                 </div>
             </div>
 
@@ -522,13 +557,17 @@
             <div v-if="currentView === 'editor'" class="flex-1 flex overflow-hidden bg-[#f4f4f5] animate-fade-in relative">
                 
                 <!-- Toolbar -->
-                <div class="absolute top-0 left-0 right-0 h-16 bg-white border-b border-zinc-200 z-30 flex items-center justify-between px-6 shadow-sm">
-                    <div class="flex items-center gap-4">
-                        <button @click="goHome" class="flex items-center gap-2 text-sm font-bold text-zinc-500 hover:text-black transition p-2 hover:bg-zinc-100 rounded"><i class="ph ph-arrow-left text-lg"></i> Back</button>
-                        <div class="h-6 w-px bg-zinc-200"></div>
-                        <div><div class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">Ref: {{ activeProposal.id }}</div><div class="font-bold text-sm text-zinc-800">{{ activeProposal.client || form.client }}</div></div>
-                        <div class="relative ml-2">
-                             <button @click="showStatusMenu = !showStatusMenu" :class="statusClass(activeProposal.status || 'Draft')" class="flex items-center gap-2 px-3 py-1 rounded text-[10px] font-bold uppercase border hover:opacity-80 transition cursor-pointer">{{ activeProposal.status || 'Draft' }}<i class="ph ph-caret-down"></i></button>
+                <div class="absolute top-0 left-0 right-0 h-16 bg-white border-b border-zinc-200 z-30 flex items-center justify-between px-3 md:px-6 shadow-sm">
+                    <div class="flex items-center gap-2 md:gap-4">
+                        <button @click="goHome" class="flex items-center gap-2 text-sm font-bold text-zinc-500 hover:text-black transition p-2 hover:bg-zinc-100 rounded"><i class="ph ph-arrow-left text-lg"></i> <span class="hidden md:inline">Back</span></button>
+                        <div class="h-6 w-px bg-zinc-200 hidden md:block"></div>
+                        <div><div class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider hidden md:block">Ref: {{ activeProposal.id }}</div><div class="font-bold text-sm text-zinc-800 truncate max-w-[150px] md:max-w-none">{{ activeProposal.client || form.client }}</div></div>
+                        <div class="relative ml-1 md:ml-2">
+                             <button @click="showStatusMenu = !showStatusMenu" :class="statusClass(activeProposal.status || 'Draft')" class="flex items-center gap-2 px-3 py-1 rounded text-[10px] font-bold uppercase border hover:opacity-80 transition cursor-pointer">
+                                <span class="md:hidden w-2 h-2 rounded-full bg-current"></span>
+                                <span class="hidden md:inline">{{ activeProposal.status || 'Draft' }}</span>
+                                <i class="ph ph-caret-down"></i>
+                            </button>
                             <div v-if="showStatusMenu" class="absolute top-full left-0 mt-2 w-40 bg-white border border-zinc-200 rounded shadow-xl z-50 py-1">
                                 <button @click="updateStatus('Draft')" class="w-full text-left px-4 py-2 text-xs hover:bg-zinc-50 flex items-center gap-2 text-zinc-600"><div class="w-2 h-2 bg-zinc-400 rounded-full"></div> Draft</button>
                                 <button @click="updateStatus('Review')" class="w-full text-left px-4 py-2 text-xs hover:bg-zinc-50 flex items-center gap-2 text-amber-600"><div class="w-2 h-2 bg-amber-500 rounded-full"></div> Review</button>
@@ -536,38 +575,54 @@
                             </div>
                         </div>
                     </div>
-                    <div class="flex gap-3"><button @click="showModal = 'export'" class="bg-black text-white px-5 py-2 rounded text-xs font-bold uppercase tracking-wide hover:bg-zinc-800 transition flex items-center gap-2 shadow-md"><i class="ph ph-export"></i> Export</button></div>
+                    <div class="flex gap-2 md:gap-3">
+                        <button @click="showMobileAdvisor = true" class="lg:hidden bg-white text-pwc-orange border border-pwc-orange md:px-4 px-2.5 py-2 rounded text-xs font-bold uppercase tracking-wide hover:bg-orange-50 transition flex items-center gap-2 shadow-sm">
+                            <i class="ph ph-sparkle text-lg md:text-base"></i> <span class="hidden md:inline">Advisor</span>
+                        </button>
+                        <button @click="showModal = 'export'" class="bg-black text-white md:px-5 px-3 py-2 rounded text-xs font-bold uppercase tracking-wide hover:bg-zinc-800 transition flex items-center gap-2 shadow-md">
+                            <i class="ph ph-export text-lg md:text-base"></i> <span class="hidden md:inline">Export</span>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Editor Area -->
-                <div class="flex-1 overflow-y-auto flex flex-col items-center pt-24 pb-12 relative" id="doc-container">
+                <div class="flex-1 overflow-y-auto flex flex-col items-center pt-24 pb-12 px-4 relative" id="doc-container">
                     
                     <!-- Formatting Toolbar -->
-                    <div class="sticky top-0 z-20 mb-4">
-                        <div class="bg-white/90 backdrop-blur-sm border border-zinc-200 rounded-full shadow-lg p-1.5 flex items-center gap-1">
-                            <button onclick="document.execCommand('bold')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="Bold"><i class="ph ph-text-b"></i></button>
-                            <button onclick="document.execCommand('italic')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="Italic"><i class="ph ph-text-italic"></i></button>
-                            <div class="w-px h-4 bg-zinc-200 mx-2"></div>
-                            <button onclick="document.execCommand('formatBlock', false, '<h2>')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 text-xs font-bold transition">H1</button>
-                            <button onclick="document.execCommand('formatBlock', false, '<h3>')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 text-xs font-bold transition">H2</button>
-                            <div class="w-px h-4 bg-zinc-200 mx-2"></div>
-                            <button onclick="document.execCommand('insertUnorderedList')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="List"><i class="ph ph-list-bullets"></i></button>
-                        </div>
+                    <div class="fixed bottom-6 right-6 z-30 mb-0 flex flex-col items-end gap-3">
+                        <transition name="slide-up">
+                            <div v-if="showFormattingToolbar" class="bg-white/90 backdrop-blur-sm border border-zinc-200 rounded-full shadow-floating p-1.5 flex flex-col items-center gap-2 mb-2">
+                                <button onclick="document.execCommand('bold')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="Bold"><i class="ph ph-text-b"></i></button>
+                                <button onclick="document.execCommand('italic')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="Italic"><i class="ph ph-text-italic"></i></button>
+                                <div class="h-px w-4 bg-zinc-200 my-1"></div>
+                                <button onclick="document.execCommand('formatBlock', false, '<h2>')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 text-xs font-bold transition">H1</button>
+                                <button onclick="document.execCommand('formatBlock', false, '<h3>')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 text-xs font-bold transition">H2</button>
+                                <div class="h-px w-4 bg-zinc-200 my-1"></div>
+                                <button onclick="document.execCommand('insertUnorderedList')" class="p-2 hover:bg-zinc-100 rounded-full text-zinc-600 transition" title="List"><i class="ph ph-list-bullets"></i></button>
+                            </div>
+                        </transition>
+                        <button @click="showFormattingToolbar = !showFormattingToolbar" class="w-12 h-12 bg-black text-white rounded-full shadow-floating flex items-center justify-center hover:bg-zinc-800 transition active:scale-95">
+                            <i :class="showFormattingToolbar ? 'ph-x' : 'ph-pencil-simple'" class="ph text-xl"></i>
+                        </button>
                     </div>
 
-                    <div class="w-[210mm] min-h-[297mm] bg-white shadow-paper relative text-sm leading-relaxed text-justify text-zinc-800 doc-content flex flex-col mb-10">
-                        <div class="p-[25mm] flex-1">
-                            <div class="absolute top-[15mm] right-[15mm]"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC" class="h-8 w-auto"></div>
+                    <div class="w-full max-w-[210mm] min-h-[297mm] bg-white shadow-paper relative text-sm leading-relaxed text-justify text-zinc-800 doc-content flex flex-col mb-10">
+                        <div class="p-8 md:p-[25mm] flex-1">
+                            <div class="absolute top-6 right-6 md:top-[15mm] md:right-[15mm]"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC" class="h-6 md:h-8 w-auto"></div>
                             <div contenteditable="true" class="outline-none" v-html="generatedContent" @input="generatedContent = $event.target.innerHTML"></div>
                         </div>
-                        <div class="px-[25mm] py-6 text-center border-t border-zinc-100 mt-auto bg-white"><p class="text-[9px] text-zinc-400 font-sans uppercase tracking-widest">PricewaterhouseCoopers Limited (Dubai Branch) • Confidential • {{ new Date().getFullYear() }}</p></div>
+                        <div class="px-8 py-6 md:px-[25mm] text-center border-t border-zinc-100 mt-auto bg-white"><p class="text-[9px] text-zinc-400 font-sans uppercase tracking-widest">PricewaterhouseCoopers Limited (Dubai Branch) • Confidential • {{ new Date().getFullYear() }}</p></div>
                     </div>
                 </div>
 
+                <!-- RIGHT PANEL BACKDROP -->
+                <div v-if="showMobileAdvisor" class="fixed inset-0 bg-black/50 z-40 lg:hidden animate-fade-in" @click="showMobileAdvisor = false"></div>
+
                 <!-- RIGHT PANEL -->
-                <div class="w-96 border-l border-zinc-200 bg-white flex flex-col z-20 shadow-xl h-full shrink-0">
-                    <div class="flex border-b border-zinc-200 bg-white">
-                        <button @click="rightTab = 'advisor'" :class="rightTab === 'advisor' ? 'border-b-2 border-pwc-orange text-pwc-orange bg-orange-50' : 'text-zinc-400 hover:text-black'" class="flex-1 py-3 text-xs font-bold uppercase tracking-wide transition">Advisor</button>
+                <div :class="showMobileAdvisor ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'" class="fixed inset-y-0 right-0 w-full md:w-96 lg:static lg:w-96 lg:pt-16 border-l border-zinc-200 bg-white flex flex-col z-50 lg:z-20 shadow-xl h-full shrink-0 transition-transform duration-300 transform">
+                    <div class="flex border-b border-zinc-200 bg-white relative">
+                        <button @click="showMobileAdvisor = false" class="lg:hidden absolute left-2 top-1/2 -translate-y-1/2 p-2 text-zinc-400 hover:text-black z-10"><i class="ph ph-x text-lg"></i></button>
+                        <button @click="rightTab = 'advisor'" :class="rightTab === 'advisor' ? 'border-b-2 border-pwc-orange text-pwc-orange bg-orange-50' : 'text-zinc-400 hover:text-black'" class="flex-1 py-3 text-xs font-bold uppercase tracking-wide transition lg:pl-0 pl-8">Advisor</button>
                         <button @click="rightTab = 'history'" :class="rightTab === 'history' ? 'border-b-2 border-pwc-orange text-pwc-orange bg-orange-50' : 'text-zinc-400 hover:text-black'" class="flex-1 py-3 text-xs font-bold uppercase tracking-wide transition">History</button>
                     </div>
                     
@@ -674,6 +729,7 @@
         data() {
             return {
                 currentView: 'login', 
+                mobileMenuOpen: false,
                 wizardStep: 1,
                 showModal: null,
                 toast: null,
@@ -681,7 +737,9 @@
                 chatInput: '',
                 chatHistory: [],
                 rightTab: 'advisor',
+                showMobileAdvisor: false,
                 showStatusMenu: false,
+                showFormattingToolbar: false,
                 settingsTab: 'general',
                 fileUploading: false,
                 
@@ -695,6 +753,16 @@
                 form: { client: 'Nebula Developments', region: 'Dubai (DIFC)', service: 'ESG & Sustainability', notes: "Client is planning 'Eco-Oasis'..." },
                 generatedContent: `<h1>Strategic ESG Framework & Decarbonization Roadmap</h1><h2>1. Executive Summary</h2><p>PwC is pleased to submit this proposal to <strong>Nebula Developments</strong> to support the strategic launch of the "Eco-Oasis" flagship project. Understanding your ambition to redefine luxury living through sustainability, our approach combines rigorous regulatory analysis with a value-driven framework aligned with the <strong>UAE Net Zero 2050</strong> strategic initiative.</p><p>We aim to position Eco-Oasis not just as a real estate asset, but as a benchmark for regenerative development in the MENA region, ensuring long-term value creation for stakeholders.</p><h2>2. Our Methodology</h2><p>We propose a rapid, high-impact engagement structured into three key phases, leveraging our global "From Strategy to Execution" framework:</p><ul><li><strong>Phase 1: Diagnostic & Benchmarking (Week 1)</strong><br>Gap analysis against Dubai Green Building Regulations (Al Sa'fat) and competitor benchmarking.</li><li><strong>Phase 2: Strategy Design (Week 2-3)</strong><br>Development of a LEED Platinum pathway and carbon footprint modeling.</li><li><strong>Phase 3: Investor Roadmap (Week 4)</strong><br>Preparation of an ESG Investment Deck suitable for green financing.</li></ul><h2>3. Team Structure</h2><p>PwC has assembled a team of regional experts to ensure delivery excellence:</p><table><tr><th>Role</th><th>Responsibility</th></tr><tr><td>Engagement Partner</td><td>Strategic oversight, QA, and final sign-off.</td></tr><tr><td>ESG Subject Matter Expert</td><td>Technical LEED, Net Zero modeling, and policy alignment.</td></tr><tr><td>Senior Associate</td><td>Project management, research, and day-to-day delivery.</td></tr></table>`,
                 risks: [{ title: 'Compliance: PDPL Article 4', desc: 'Use of AI sensors for tenant tracking requires explicit Data Privacy Impact Assessment (DPIA).', action: 'ADD DPIA TO SCOPE' }],
+                pendingApprovals: [
+                    { id: 1, title: 'Review: Red Sea Project Scope', submittedBy: 'Sarah Miller', time: '2 hours ago', initials: 'SM', status: 'pending' },
+                    { id: 2, title: 'Risk Check: AI Implementation', submittedBy: 'Ahmed Khan', time: '5 hours ago', initials: 'AK', status: 'pending' }
+                ],
+                outForReview: [
+                    { id: 3, title: 'Nebula Developments: ESG Strategy', waitingFor: 'Partner Sign-off', status: 'review', isMe: true, partnerInitials: 'PT' }
+                ],
+                completedApprovals: [
+                    { id: 4, title: 'Emaar Properties: Q3 Audit', status: 'approved', approvedTime: 'yesterday' }
+                ],
                 recentProposals: [
                     { id: 'P-101', client: 'Emaar Properties', service: 'Audit', date: '24 Oct 2025', status: 'Approved' },
                     { id: 'P-102', client: 'ADNOC Dist.', service: 'Strategy', date: '22 Oct 2025', status: 'Review' },
@@ -710,8 +778,30 @@
                 logs: []
             }
         },
+        watch: {
+            currentView(newView) {
+                if (newView) window.location.hash = newView;
+            }
+        },
+        mounted() {
+            const handleHashChange = () => {
+                const hash = window.location.hash.slice(1);
+                if (hash) {
+                    if (hash === 'editor' && !this.activeProposal.id) {
+                         this.currentView = 'dashboard';
+                         return;
+                    }
+                    if (hash !== this.currentView) {
+                        this.currentView = hash;
+                    }
+                }
+            };
+            if (window.location.hash) handleHashChange();
+            window.addEventListener('hashchange', handleHashChange);
+        },
         methods: {
             login() { this.currentView = 'dashboard'; this.showToast('Authentication Successful'); },
+            navigate(view) { this.currentView = view; this.mobileMenuOpen = false; },
             goHome() { this.currentView = 'dashboard'; },
             navClass(view) { if(this.currentView === view) { if(view === 'knowledge') return ''; return 'bg-orange-50 text-pwc-orange border border-orange-100 shadow-sm'; } return 'text-zinc-500 hover:text-black hover:bg-zinc-50'; },
             statusClass(status) { const map = { 'Approved': 'bg-emerald-50 text-emerald-800 border-emerald-100', 'Review': 'bg-amber-50 text-amber-800 border-amber-100', 'Draft': 'bg-zinc-100 text-zinc-600 border-zinc-200' }; return map[status] || map['Draft']; },
@@ -726,6 +816,13 @@
             },
             openProposal(prop) { this.activeProposal = prop; this.currentView = 'editor'; },
             deleteProposal(listType, index) { if(listType === 'recent') this.recentProposals.splice(index, 1); else this.allProposals.splice(index, 1); this.showToast('Proposal deleted'); },
+            viewApproval(item) { this.showToast(`Viewing: ${item.title}`); },
+            approveAction(item, index) { 
+                this.pendingApprovals.splice(index, 1);
+                this.completedApprovals.unshift({ ...item, status: 'approved', approvedTime: 'Just now' });
+                this.showToast('Approval Confirmed'); 
+            },
+            nudgeAction(item) { this.showToast('Reminder sent to reviewer'); },
             resolveRisk(index) { this.generatedContent = this.generatedContent.replace('Gap analysis against', '<strong>Data Privacy Impact Assessment (DPIA)</strong>, Gap analysis against'); this.risks.splice(index, 1); this.showToast('Scope updated with DPIA'); },
             triggerAction(text) { this.chatInput = text; this.sendMessage(); },
             sendMessage() {
