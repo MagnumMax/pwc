@@ -79,6 +79,42 @@
         [contenteditable]:focus { outline: none; }
         .toggle-checkbox:checked { right: 0; border-color: #D93900; }
         .toggle-checkbox:checked + .toggle-label { background-color: #D93900; }
+
+        /* Print Styles */
+        @media print {
+            body { background: white; }
+            .no-print, header, .sidebar-right, .toolbar { display: none !important; }
+            .doc-container { margin: 0; padding: 0; border: none; box-shadow: none; height: auto; overflow: visible; }
+            .doc-content { padding: 0; margin: 0; max-width: 100%; }
+            @page { margin: 2cm; }
+        }
+
+        /* Collaboration Styles */
+        .comment-bubble { 
+            position: absolute; 
+            right: -270px; 
+            width: 250px; 
+            background: white; 
+            border: 1px solid #e4e4e7; 
+            padding: 12px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+            transition: all 0.3s; 
+            z-index: 50; 
+        }
+        .comment-bubble::before { 
+            content: ''; 
+            position: absolute; 
+            left: -6px; 
+            top: 16px; 
+            width: 12px; 
+            height: 12px; 
+            background: white; 
+            border-left: 1px solid #e4e4e7; 
+            border-bottom: 1px solid #e4e4e7; 
+            transform: rotate(45deg); 
+        }
+        .comment-active { border-right: 3px solid #D93900; background: rgba(217, 57, 0, 0.05); }
     </style>
 </head>
 <body>
@@ -158,7 +194,71 @@
         <!-- CONTENT AREA -->
         <main class="flex-1 flex flex-col overflow-hidden relative bg-[#f4f4f5]">
             
-            <!-- VIEW: LOGIN -->
+            <!-- VIEW: WIZARD FORM -->
+            <transition name="fade-in">
+                <div v-if="currentView === 'wizard-form'" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 animate-fade-in">
+                    <div class="w-full max-w-lg">
+                        <div class="mb-8 text-center">
+                            <h2 class="text-2xl font-serif font-bold text-zinc-900 mb-2">Proposal Configuration</h2>
+                            <p class="text-zinc-500 text-sm">Define the core parameters for your new engagement.</p>
+                        </div>
+                        
+                        <div class="space-y-5 bg-white p-8 rounded-xl border border-zinc-200 shadow-lg">
+                            <div>
+                                <label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Client Name</label>
+                                <input v-model="form.client" type="text" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange focus:ring-1 focus:ring-pwc-orange transition" placeholder="e.g. Nebula Developments">
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Service Line</label>
+                                    <select v-model="form.service" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange bg-white">
+                                        <option>Strategy</option>
+                                        <option>Audit</option>
+                                        <option>Tax</option>
+                                        <option>Technology</option>
+                                        <option>ESG & Sustainability</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Region</label>
+                                    <select v-model="form.region" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange bg-white">
+                                        <option>Dubai (DIFC)</option>
+                                        <option>Abu Dhabi (ADGM)</option>
+                                        <option>Riyadh (KSA)</option>
+                                        <option>Doha (Qatar)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Est. Budget ($)</label>
+                                    <input v-model="economics.revenue" type="number" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange transition" placeholder="500000">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Deadline</label>
+                                    <input type="date" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange transition">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-bold text-zinc-500 uppercase mb-2">Key Focus Areas (Optional)</label>
+                                <textarea v-model="form.notes" class="w-full border border-zinc-300 rounded px-4 py-3 text-sm focus:outline-none focus:border-pwc-orange transition h-24 resize-none" placeholder="e.g. Focus on digital transformation..."></textarea>
+                            </div>
+
+                            <div class="pt-4 flex gap-3">
+                                <button @click="currentView = 'dashboard'" class="flex-1 py-3 text-sm font-bold text-zinc-500 hover:bg-zinc-50 rounded border border-zinc-200 transition">CANCEL</button>
+                                <button @click="startGeneration" class="flex-[2] bg-[#D93900] text-white py-3 rounded text-sm font-bold hover:bg-[#b32d00] transition shadow-md flex items-center justify-center gap-2 group">
+                                    GENERATE DRAFT <i class="ph ph-magic-wand text-lg group-hover:rotate-12 transition-transform"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <!-- VIEW: LOADING -->
             <transition name="fade-in">
                 <div v-if="currentView === 'login'" class="absolute inset-0 bg-white flex items-center justify-center z-50">
                     <div class="w-full max-w-sm text-center px-6">
@@ -585,6 +685,13 @@
                         <button @click="showMobileAdvisor = true" class="lg:hidden bg-white text-pwc-orange border border-pwc-orange md:px-4 px-2.5 py-2 rounded text-xs font-bold uppercase tracking-wide hover:bg-orange-50 transition flex items-center gap-2 shadow-sm">
                             <i class="ph ph-sparkle text-lg md:text-base"></i> <span class="hidden md:inline">Advisor</span>
                         </button>
+                        <button @click="toggleComments" :class="showComments ? 'bg-pwc-orange text-white border-pwc-orange' : 'bg-white text-zinc-600 border-zinc-200'" class="md:px-4 px-2.5 py-2 rounded text-xs font-bold uppercase tracking-wide hover:opacity-80 transition flex items-center gap-2 shadow-sm border" title="Collaboration Mode">
+                            <i class="ph ph-chat-centered-text text-lg md:text-base"></i> <span class="hidden md:inline">Comments</span>
+                            <span v-if="comments.length" class="bg-red-500 text-white text-[9px] px-1.5 rounded-full">{{ comments.length }}</span>
+                        </button>
+                        <button @click="printProposal" class="bg-white text-zinc-600 border border-zinc-200 md:px-4 px-2.5 py-2 rounded text-xs font-bold uppercase tracking-wide hover:bg-zinc-50 hover:text-black transition flex items-center gap-2 shadow-sm hidden md:flex" title="Export PDF">
+                            <i class="ph ph-file-pdf text-lg"></i> PDF
+                        </button>
                         <button @click="showModal = 'export'" class="bg-black text-white md:px-5 px-3 py-2 rounded text-xs font-bold uppercase tracking-wide hover:bg-zinc-800 transition flex items-center gap-2 shadow-md">
                             <i class="ph ph-export text-lg md:text-base"></i> <span class="hidden md:inline">Export</span>
                         </button>
@@ -612,8 +719,27 @@
                     </div>
 
                     <!-- Editor Area -->
-                    <div class="flex-1 overflow-y-auto flex flex-col items-center pt-24 pb-12 px-4 relative w-full" id="doc-container">
-                        <div class="w-full max-w-[210mm] min-h-[297mm] bg-white shadow-paper relative text-sm leading-relaxed text-justify text-zinc-800 doc-content flex flex-col mb-10">
+                    <div class="flex-1 overflow-auto flex flex-col pt-24 pb-12 px-4 relative w-full transition-all duration-300" :class="showComments ? 'items-start pl-4 md:pl-20' : 'items-center'" id="doc-container">
+                        <div class="w-full max-w-[210mm] min-h-[297mm] bg-white shadow-paper relative text-sm leading-relaxed text-justify text-zinc-800 doc-content flex flex-col mb-10 transition-all duration-300 shrink-0">
+                        
+                        <!-- Comments Overlay -->
+                        <div v-if="showComments" class="absolute top-0 right-0 bottom-0 w-0 z-30">
+                            <div v-for="(comment, idx) in comments" :key="idx" class="comment-bubble" :class="{'comment-active': comment.active}" :style="{ top: comment.top + 'px' }">
+                                <div class="flex items-start gap-3 mb-2">
+                                    <div class="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-xs font-bold text-zinc-600">{{ comment.initials }}</div>
+                                    <div>
+                                        <div class="text-xs font-bold text-zinc-900">{{ comment.author }}</div>
+                                        <div class="text-[10px] text-zinc-400">{{ comment.role }} • {{ comment.time }}</div>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-zinc-600 mb-3">{{ comment.text }}</p>
+                                <div class="flex gap-2">
+                                    <button @click="resolveComment(idx)" class="flex-1 bg-zinc-900 text-white py-1.5 rounded text-[10px] font-bold hover:bg-black transition">RESOLVE</button>
+                                    <button class="flex-1 border border-zinc-200 text-zinc-500 py-1.5 rounded text-[10px] font-bold hover:bg-zinc-50 transition">REPLY</button>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="p-8 md:p-[25mm] flex-1">
                             <div class="absolute top-6 right-6 md:top-[15mm] md:right-[15mm]"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/PwC_2025_Logo.svg/500px-PwC_2025_Logo.svg.png" alt="PwC" class="h-6 md:h-8 w-auto"></div>
                             <div contenteditable="true" class="outline-none" v-html="generatedContent" @input="generatedContent = $event.target.innerHTML"></div>
@@ -640,9 +766,27 @@
                              <div>
                                 <h4 class="text-xs font-bold text-zinc-900 uppercase tracking-wider mb-3">Project Economics</h4>
                                 <div class="bg-zinc-900 text-white rounded-lg p-4 shadow-md relative overflow-hidden">
-                                    <div class="relative z-10 grid grid-cols-2 gap-4">
-                                        <div><div class="text-[10px] text-zinc-400 uppercase">Est. Revenue</div><div class="text-xl font-serif text-white">$480k</div></div>
-                                        <div><div class="text-[10px] text-zinc-400 uppercase">Margin</div><div class="text-xl font-serif text-emerald-400">42%</div></div>
+                                    <div class="relative z-10 space-y-3">
+                                        <div class="grid grid-cols-2 gap-4 border-b border-zinc-700 pb-3">
+                                            <div>
+                                                <div class="text-[10px] text-zinc-400 uppercase mb-1">Revenue ($)</div>
+                                                <input v-model.number="economics.revenue" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-pwc-orange font-mono">
+                                            </div>
+                                            <div>
+                                                <div class="text-[10px] text-zinc-400 uppercase mb-1">Hours</div>
+                                                <input v-model.number="economics.hours" type="number" class="w-full bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-sm text-white focus:outline-none focus:border-pwc-orange font-mono">
+                                            </div>
+                                        </div>
+                                        <div class="flex justify-between items-center pt-1">
+                                            <div>
+                                                <div class="text-[10px] text-zinc-400 uppercase">Margin %</div>
+                                                <div :class="marginClass" class="text-xl font-serif font-bold">{{ marginPercent }}%</div>
+                                            </div>
+                                            <div class="text-right">
+                                                <div class="text-[10px] text-zinc-400 uppercase">Profit</div>
+                                                <div class="text-sm font-mono text-zinc-300">${{ profit.toLocaleString() }}</div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -837,6 +981,7 @@
                     { name: "Internal Client History", desc: "Past engagements with Nebula Developments.", icon: "ph ph-users", active: true },
                     { name: "Market Research (MENA)", desc: "Third-party market data feeds (Bloomberg, Reuters).", icon: "ph ph-chart-line-up", active: false },
                 ],
+                economics: { revenue: 480000, hours: 850 },
                 form: { client: 'Nebula Developments', region: 'Dubai (DIFC)', service: 'ESG & Sustainability', notes: "Client is planning 'Eco-Oasis'..." },
                 generatedContent: `<h1>Strategic ESG Framework & Decarbonization Roadmap</h1><h2>1. Executive Summary</h2><p>PwC is pleased to submit this proposal to <strong>Nebula Developments</strong> to support the strategic launch of the "Eco-Oasis" flagship project. Understanding your ambition to redefine luxury living through sustainability, our approach combines rigorous regulatory analysis with a value-driven framework aligned with the <strong>UAE Net Zero 2050</strong> strategic initiative.</p><p>We aim to position Eco-Oasis not just as a real estate asset, but as a benchmark for regenerative development in the MENA region, ensuring long-term value creation for stakeholders.</p><h2>2. Our Methodology</h2><p>We propose a rapid, high-impact engagement structured into three key phases, leveraging our global "From Strategy to Execution" framework:</p><ul><li><strong>Phase 1: Diagnostic & Benchmarking (Week 1)</strong><br>Gap analysis against Dubai Green Building Regulations (Al Sa'fat) and competitor benchmarking.</li><li><strong>Phase 2: Strategy Design (Week 2-3)</strong><br>Development of a LEED Platinum pathway and carbon footprint modeling.</li><li><strong>Phase 3: Investor Roadmap (Week 4)</strong><br>Preparation of an ESG Investment Deck suitable for green financing.</li></ul><h2>3. Team Structure</h2><p>PwC has assembled a team of regional experts to ensure delivery excellence:</p><table><tr><th>Role</th><th>Responsibility</th></tr><tr><td>Engagement Partner</td><td>Strategic oversight, QA, and final sign-off.</td></tr><tr><td>ESG Subject Matter Expert</td><td>Technical LEED, Net Zero modeling, and policy alignment.</td></tr><tr><td>Senior Associate</td><td>Project management, research, and day-to-day delivery.</td></tr></table>`,
                 risks: [{ title: 'Compliance: PDPL Article 4', desc: 'Use of AI sensors for tenant tracking requires explicit Data Privacy Impact Assessment (DPIA).', action: 'ADD DPIA TO SCOPE' }],
@@ -862,7 +1007,18 @@
                      { id: 'P-104', client: 'Masdar', service: 'ESG', date: '18 Oct 2025', status: 'Approved' },
                      { id: 'P-105', client: 'Etihad Rail', service: 'Deals', date: '15 Oct 2025', status: 'Review' },
                 ],
-                logs: []
+                logs: [],
+                comments: [],
+                showComments: false
+            }
+        },
+        computed: {
+            profit() { return this.economics.revenue - (this.economics.hours * 225); }, // Assuming $225 internal cost
+            marginPercent() { if(!this.economics.revenue) return 0; return Math.round((this.profit / this.economics.revenue) * 100); },
+            marginClass() { 
+                if(this.marginPercent >= 40) return 'text-emerald-500'; 
+                if(this.marginPercent >= 25) return 'text-amber-500'; 
+                return 'text-red-500'; 
             }
         },
         watch: {
@@ -892,15 +1048,82 @@
             goHome() { this.currentView = 'dashboard'; },
             navClass(view) { if(this.currentView === view) { if(view === 'knowledge') return ''; return 'bg-orange-50 text-pwc-orange border border-orange-100 shadow-sm'; } return 'text-zinc-500 hover:text-black hover:bg-zinc-50'; },
             statusClass(status) { const map = { 'Approved': 'bg-emerald-50 text-emerald-800 border-emerald-100', 'Review': 'bg-amber-50 text-amber-800 border-amber-100', 'Draft': 'bg-zinc-100 text-zinc-600 border-zinc-200' }; return map[status] || map['Draft']; },
-            startWizard() { this.currentView = 'wizard'; this.wizardStep = 1; },
+            startWizard() { this.currentView = 'wizard-form'; },
             startGeneration() {
                 this.currentView = 'loading';
                 this.logs = [];
-                const steps = [{ text: "AUTHENTICATING USER...", delay: 500 }, { text: "RETRIEVING CLIENT DATA...", delay: 1500 }, { text: "SCANNING UAE REGULATIONS...", delay: 2500, color: "text-pwc-orange" }, { text: "GENERATING SECTIONS...", delay: 3500 }, { text: "FINALIZING DOCUMENT...", delay: 4500 }];
+                
+                // Smart Templates
+                let content = '';
+                if (this.form.service && this.form.service.includes('Audit')) {
+                    content = `<h1>Audit Strategy & Risk Assurance for ${this.form.client}</h1>
+                    <h2>1. Engagement Scope</h2>
+                    <p>PwC is pleased to submit this proposal to <strong>${this.form.client}</strong> for the provision of external audit services. Our approach is designed to provide robust assurance while delivering insights that add value to your business operations in ${this.form.region}.</p>
+                    <p>We understand the complexities of your industry and have tailored our audit methodology to address key financial reporting risks.</p>
+                    <h2>2. Our Audit Approach</h2>
+                    <p>We utilize a risk-based audit methodology, focusing on areas of highest significance:</p>
+                    <ul>
+                        <li><strong>Planning & Risk Assessment (Week 1)</strong><br>Understanding your business processes and identifying key audit risks.</li>
+                        <li><strong>Control Evaluation (Week 2-3)</strong><br>Testing the design and operating effectiveness of internal controls.</li>
+                        <li><strong>Substantive Testing (Week 4-6)</strong><br>Detailed verification of balances and transactions.</li>
+                    </ul>
+                    <h2>3. Deliverables</h2>
+                    <p>Our engagement will result in the following key deliverables:</p>
+                    <ul>
+                        <li>Independent Auditor's Report</li>
+                        <li>Management Letter on Internal Controls</li>
+                        <li>Audit Committee Presentation</li>
+                    </ul>`;
+                } else if (this.form.service && this.form.service.includes('ESG')) {
+                     content = `<h1>Strategic ESG Framework & Decarbonization Roadmap</h1>
+                     <h2>1. Executive Summary</h2>
+                     <p>PwC is pleased to submit this proposal to <strong>${this.form.client}</strong> to support your sustainability ambitions. Our approach combines rigorous regulatory analysis with a value-driven framework aligned with the <strong>${this.form.region} Net Zero</strong> strategic initiative.</p>
+                     <p>We aim to position your organization as a leader in sustainable development, ensuring long-term value creation for stakeholders.</p>
+                     <h2>2. Our Methodology</h2>
+                     <p>We propose a rapid, high-impact engagement structured into three key phases:</p>
+                     <ul>
+                        <li><strong>Phase 1: Diagnostic & Benchmarking (Week 1)</strong><br>Gap analysis against ${this.form.region} regulations and competitor benchmarking.</li>
+                        <li><strong>Phase 2: Strategy Design (Week 2-3)</strong><br>Development of a decarbonization pathway and carbon footprint modeling.</li>
+                        <li><strong>Phase 3: Investor Roadmap (Week 4)</strong><br>Preparation of an ESG Investment Deck suitable for green financing.</li>
+                     </ul>
+                     <h2>3. Team Structure</h2>
+                     <p>PwC has assembled a team of regional experts to ensure delivery excellence:</p>
+                     <table><tr><th>Role</th><th>Responsibility</th></tr><tr><td>Engagement Partner</td><td>Strategic oversight, QA, and final sign-off.</td></tr><tr><td>ESG Subject Matter Expert</td><td>Technical LEED, Net Zero modeling, and policy alignment.</td></tr><tr><td>Senior Associate</td><td>Project management, research, and day-to-day delivery.</td></tr></table>`;
+                } else {
+                    // Default / Strategy
+                     content = `<h1>Strategic Growth Proposal for ${this.form.client}</h1>
+                     <h2>1. Executive Summary</h2>
+                     <p>PwC is pleased to submit this proposal to <strong>${this.form.client}</strong>. Understanding your ambition in the ${this.form.region} market, our approach combines rigorous regulatory analysis with a value-driven framework.</p>
+                     <p>We aim to position this engagement as a benchmark for excellence, ensuring long-term value creation for stakeholders.</p>
+                     <h2>2. Our Methodology</h2>
+                     <p>We propose a rapid, high-impact engagement structured into three key phases, leveraging our global "From Strategy to Execution" framework:</p>
+                     <ul>
+                        <li><strong>Phase 1: Market Assessment (Week 1)</strong><br>Deep dive into market trends and competitor landscape in ${this.form.region}.</li>
+                        <li><strong>Phase 2: Strategy Formulation (Week 2-3)</strong><br>Development of strategic pillars and value proposition.</li>
+                        <li><strong>Phase 3: Implementation Roadmap (Week 4)</strong><br>Detailed action plan and financial projections.</li>
+                     </ul>
+                     <h2>3. Team Structure</h2>
+                     <p>PwC has assembled a team of regional experts to ensure delivery excellence:</p>
+                     <table><tr><th>Role</th><th>Responsibility</th></tr><tr><td>Engagement Partner</td><td>Strategic oversight, QA, and final sign-off.</td></tr><tr><td>Strategy Director</td><td>Lead on strategic direction and client workshops.</td></tr><tr><td>Senior Associate</td><td>Market research, modeling, and analysis.</td></tr></table>`;
+                }
+                
+                this.generatedContent = content;
+                
+                // Initialize Comments
+                this.comments = [
+                    { author: 'Sarah Miller', initials: 'SM', role: 'Partner', time: '10m ago', text: 'Please ensure we highlight our digital capabilities in the methodology.', top: 380, active: true },
+                    { author: 'Ahmed Khan', initials: 'AK', role: 'Director', time: '2h ago', text: 'Check the conflict of interest statement for this client.', top: 650, active: false }
+                ];
+                this.showComments = false;
+
+                const steps = [{ text: "AUTHENTICATING USER...", delay: 500 }, { text: `CONNECTING TO ${this.form.client.toUpperCase()} CRM...`, delay: 1500 }, { text: "SCANNING REGULATORY FRAMEWORKS...", delay: 2500, color: "text-pwc-orange" }, { text: "GENERATING SECTIONS...", delay: 3500 }, { text: "FINALIZING DOCUMENT...", delay: 4500 }];
                 let start = Date.now();
                 steps.forEach(s => setTimeout(() => this.logs.push({ time: `+${((Date.now()-start)/1000 + (s.delay/1000)).toFixed(1)}s`, text: s.text, color: s.color }), s.delay));
-                setTimeout(() => { this.activeProposal = { id: 'NEB-2026-ESG', client: this.form.client, status: 'Draft' }; this.currentView = 'editor'; }, 5500);
+                setTimeout(() => { this.activeProposal = { id: 'P-' + Math.floor(Math.random() * 1000), client: this.form.client, status: 'Draft', service: this.form.service, date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) }; this.currentView = 'editor'; }, 5500);
             },
+            printProposal() { window.print(); },
+            toggleComments() { this.showComments = !this.showComments; if(this.showComments) this.showToast('Collaboration Mode Active'); },
+            resolveComment(index) { this.comments.splice(index, 1); this.showToast('Comment Resolved'); },
             openProposal(prop) { this.activeProposal = prop; this.currentView = 'editor'; },
             deleteProposal(listType, index) { if(listType === 'recent') this.recentProposals.splice(index, 1); else this.allProposals.splice(index, 1); this.showToast('Proposal deleted'); },
             viewApproval(item) { this.showToast(`Viewing: ${item.title}`); },
